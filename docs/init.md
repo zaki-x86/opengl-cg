@@ -39,6 +39,35 @@ if (!window) {
 glfwMakeContextCurrent(window);
 ```
 
+* Initialize glew and check if it fails. If it fails, it prints an error message and exits the program.
+
+```cpp
+/* Initialize GLEW */
+glewExperimental = GL_TRUE;
+if (glewInit() != GLEW_OK) {
+    std::cout << "Failed to initialize GLEW" << std::endl;
+    return -1;
+}
+```
+
+* You can log the OpenGL version and the graphics card that is being used.
+
+```cpp
+// get version info
+const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
+const GLubyte* version = glGetString(GL_VERSION); // version as a string
+printf("Renderer: %s\n", renderer);
+printf("OpenGL version supported %s\n", version);
+```
+
+* Tell GL to only draw onto a pixel if the shape is closer to the viewer
+
+```cpp
+glEnable(GL_DEPTH_TEST); // enable depth-testing
+glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+```
+
+
 * You may define a function that responds to window resizing. This is not required but it is recommended.
 
 ```cpp
@@ -59,7 +88,7 @@ glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 /* Loop until the user closes the window */
 while (!glfwWindowShouldClose(window)) {
     /* Render here */
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /* Swap front and back buffers */
     glfwSwapBuffers(window);
@@ -83,3 +112,10 @@ if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
 }
 ```
+
+---
+
+Now that we have everything is properly setup, you are ready to render your first triangle.
+
+[Home](../README.md)
+[Next: Rendering a triangle](triangle.md)
