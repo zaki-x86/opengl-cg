@@ -27,3 +27,11 @@ target_link_libraries(cg-opengl
         ${GLEW_LIBRARIES}
         glfw
 )
+
+# Store the executable in bin/ folder
+set_target_properties(cg-opengl PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# Tell CMake to copy all shaders to the build directory
+file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR}/bin)
