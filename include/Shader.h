@@ -8,22 +8,75 @@
 #include <GL/glew.h>
 #include <glm/vec3.hpp>
 
+/**
+ * decimals from 0 to 9 in hex:
+ * 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 
+ * 
+ */
+#define SHADER_COMPILE_SUCCESS 0b00000000
+#define VERTEX_SHADER_COMPILE_SUCCESS 0b00000001
+#define FRAGMENT_SHADER_COMPILE_SUCCESS 0b00000010
+#define SHADER_LINK_SUCCESS 0b00000100
+#define SHADER_COMPILE_FAILED 0b10000000
+#define VERTEX_SHADER_COMPILE_FAILED 0b00000001
+#define FRAGMENT_SHADER_COMPILE_FAILED 0b00000010
+#define SHADER_LINK_FAILED 0b00000100
+#define VERTEX_SHADER_FILE_READ_FAILED 0b00001000
+#define FRAGMENT_SHADER_FILE_READ_FAILED 0b00010000
+#define VERTEX_SHADER_FILE_EMPTY 0b00100000
+#define FRAGMENT_SHADER_FILE_EMPTY 0b01000000
+
+struct ShaderDebugInfo {
+    ShaderDebugInfo() : status(0), VertexShaderCompileInfo(""), FragmentShaderCompileInfo(""), LinkInfo("") {}
+    ShaderDebugInfo(const ShaderDebugInfo& other) : status(other.status), VertexShaderCompileInfo(other.VertexShaderCompileInfo), FragmentShaderCompileInfo(other.FragmentShaderCompileInfo), LinkInfo(other.LinkInfo) {}
+    ShaderDebugInfo(ShaderDebugInfo&& other) : status(other.status), VertexShaderCompileInfo(std::move(other.VertexShaderCompileInfo)), FragmentShaderCompileInfo(std::move(other.FragmentShaderCompileInfo)), LinkInfo(std::move(other.LinkInfo)) {}
+
+    ShaderDebugInfo& operator= (const ShaderDebugInfo& other) {
+        status = other.status;
+        VertexShaderCompileInfo = other.VertexShaderCompileInfo;
+        FragmentShaderCompileInfo = other.FragmentShaderCompileInfo;
+        LinkInfo = other.LinkInfo;
+        return *this;
+    }
+
+    ShaderDebugInfo& operator= (ShaderDebugInfo&& other) {
+        status = other.status;
+        VertexShaderCompileInfo = std::move(other.VertexShaderCompileInfo);
+        FragmentShaderCompileInfo = std::move(other.FragmentShaderCompileInfo);
+        LinkInfo = std::move(other.LinkInfo);
+        return *this;
+    }
+
+    uint8_t status;
+    std::string VertexShaderCompileInfo;
+    std::string FragmentShaderCompileInfo;
+    std::string LinkInfo;
+};
+
+
 class Shader {
 public:
     Shader();
+    
+    Shader(
+        const std::string& vertexShaderPath,
+        const std::string& fragmentShaderPath,
+        bool debug = true);
+    
     ~Shader();
 
-    bool CompileVertexShader(const std::string& filePath);
-    bool CompileFragmentShader(const std::string& filePath);
-    std::string GetCompileInfo();
-    bool Link();
-    std::string GetLinkInfo();
+    void SetShader(const std::string& filePath, uint8_t shaderType);
 
-    void Use();
+    inline std::string GetVertexShaderCode() const { return m_vertexShaderCode; }
+    inline constexpr unsigned int GetVertexShaderID() const { return m_vertexShaderID;}
+    inline std::string GetFragmentShaderCode() const { return m_fragmentShaderCode;}
+    inline constexpr unsigned int GetFragmentShaderID() const { return m_fragmentShaderID;}
+    inline constexpr unsigned int GetProgramID() const { return m_programID;}
+    ShaderDebugInfo& GetDebugInfo() const { return *m_debugInfo; }
 
-    inline constexpr uint32_t GetProgramID() const noexcept { return m_programID; }
-    inline constexpr uint32_t GetVertexShaderID() const noexcept { return m_vertexShaderID; }
-    inline constexpr uint32_t GetFragmentShaderID() const noexcept { return m_fragmentShaderID; }
+    void Compile();
+    void DisableDebug() { m_debug = false;}
+    void Use() { glUseProgram(m_programID); }
 
 private:
     GLuint m_programID;
@@ -31,6 +84,8 @@ private:
     GLuint m_fragmentShaderID;
     std::string m_vertexShaderCode;
     std::string m_fragmentShaderCode;
+    ShaderDebugInfo* m_debugInfo;
+    bool m_debug;
 
     enum {
         VERTEX_SHADER,
@@ -54,6 +109,50 @@ private:
             #ifdef EXCEPTIONS_ENABLED
             throw std::runtime_error("Shader file is empty: " + filePath);
             #endif // EXCEPTIONS_ENABLED
+        }
+    }
+
+    void CompileVertexShader() {
+        
+        
+        const char* shaderCode = m_vertexShaderCode.c_str();
+        m_vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(m_vertexShaderID, 1, &shaderCode, NULL);
+        glCompileShader(m_vertexShaderID);
+
+        if(m_debug) {
+            int success;
+            glGetShaderiv(m_vertexShaderID, GL_COMPILE_STATUS, &success);
+            if(!success) {
+                m_debugInfo->status = SHADER_COMPILE_FAILED || VERTEX_SHADER_COMPILE_FAILED;
+                char infoLog[512];
+                glGetShaderInfoLog(m_vertexShaderID, 512, NULL, infoLog);
+                m_debugInfo->VertexShaderCompileInfo = std::string(infoLog);
+            }
+            m_debugInfo->status = SHADER_COMPILE_SUCCESS || VERTEX_SHADER_COMPILE_SUCCESS;
+            m_debugInfo->VertexShaderCompileInfo = std::string("Vertex shader compiled successfully");
+        }
+
+        return;
+    }
+
+    void CompileFragmentShader() {
+        const char* shaderCode = m_fragmentShaderCode.c_str();
+        m_fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(m_fragmentShaderID, 1, &shaderCode, NULL);
+        glCompileShader(m_fragmentShaderID);
+        
+        if(m_debug) {
+            int success;
+            glGetShaderiv(m_fragmentShaderID, GL_COMPILE_STATUS, &success);
+            if(!success) {
+                m_debugInfo->status = SHADER_COMPILE_FAILED || FRAGMENT_SHADER_COMPILE_FAILED;
+                char infoLog[512];
+                glGetShaderInfoLog(m_fragmentShaderID, 512, NULL, infoLog);
+                m_debugInfo->FragmentShaderCompileInfo = std::string(infoLog);
+            }
+            m_debugInfo->status = SHADER_COMPILE_SUCCESS || FRAGMENT_SHADER_COMPILE_SUCCESS;
+            m_debugInfo->FragmentShaderCompileInfo = "Fragment shader compiled successfully";
         }
     }
 };
