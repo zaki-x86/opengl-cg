@@ -16,6 +16,7 @@ add_executable(cg-opengl
         src/main.cpp
         src/Shader.cpp
         src/Triangle.cpp
+        src/GenericShape.cpp
 )
 
 target_include_directories(cg-opengl PRIVATE

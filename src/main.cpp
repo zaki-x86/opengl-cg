@@ -4,8 +4,11 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 #include "Shader.h"
+#include "Triangle.h"
+#include "GenericShape.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -66,59 +69,53 @@ int main(void) {
     /// `glfwSetFramebufferSizeCallback` sets the callback function for the window resize event
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);  
     
-    /// Triangle
 
     /// Vertices of a triangle, defined in NDC (Normalized Device Coordinates)
+    /// supress unused variable warning for `vertices`
     float vertices[] = {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
-        0.0f,  0.5f, 0.0f
+        0.0f,  0.5f, 0.0f,
+        -0.5f, 0.5f, 0.0f // tip of second triangle
     };
 
-    /// VBO (Vertex buffer object)
-    uint32_t VBO;
-    /// Generate 1 buffer object name
-    glGenBuffers(1, &VBO);
-    /// Bind the buffer object to the target GL_ARRAY_BUFFER
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    /// Create and initialize a buffer object's data store
-    /// GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    /// Vertex array object
-    uint32_t VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+    unsigned int indices[] = {
+        0, 1, 2,
+        0, 2, 3
+    };
 
-    Shader shader;
-    if(!shader.CompileVertexShader("shaders/triangle.vert")) {
-        std::string info = shader.GetCompileInfo();
-        std::cout << "Vertex shader compile error: " << info << std::endl;
-    }
-    
-    if(!shader.CompileFragmentShader("shaders/triangle.frag")) {
-        std::string info = shader.GetCompileInfo();
-        std::cout << "Fragment shader compile error: " << info << std::endl;
-    }
-    
-    if(!shader.Link()) {
-        std::string info = shader.GetLinkInfo();
-        std::cout << "Shader link error: " << info << std::endl;
-    }
-    
+    #if _DEBUG
+        Shader shader("shaders/triangle.vert", "shaders/triangle.frag");
+        shader.Compile();
+        ShaderDebugInfo& debugInfo = shader.GetDebugInfo();
+        std::cout << "Vertex shader info log: " << debugInfo.VertexShaderCompileInfo << std::endl;
+        std::cout << "Fragment shader info log: " << debugInfo.FragmentShaderCompileInfo << std::endl;
+        std::cout << "Shader program info log: " << debugInfo.LinkInfo << std::endl;
+    #else
+        Shader shader("shaders/triangle.vert", "shaders/triangle.frag");
+        shader.Compile();
+    #endif
+
+    std::vector<float> vertices_vec(vertices, vertices + sizeof(vertices) / sizeof(float));
+    std::vector<int> indices_vec(indices, indices + sizeof(indices) / sizeof(float));
+    GenericShape shape(vertices_vec, indices_vec, shader);
+
     
     while(!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.Use();
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //tr.Draw();
         
+        // update the uniform color
+        float timeValue = glfwGetTime();
+        float greenValue = sin(timeValue) / 2.0f + 0.5f;
+        int vertexColorLocation = glGetUniformLocation(shader.GetProgramID(), "ourColor");
+        glUniform4f(vertexColorLocation, 0.5f, greenValue, 0.3f, 1.0f);
+        
+        shape.Draw();
+
         processInput(window);
         glfwPollEvents();    
         glfwSwapBuffers(window);
