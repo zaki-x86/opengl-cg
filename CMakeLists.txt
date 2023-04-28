@@ -15,6 +15,7 @@ find_package(glfw3 REQUIRED)
 add_executable(cg-opengl
         src/main.cpp
         src/Shader.cpp
+        src/Triangle.cpp
 )
 
 target_include_directories(cg-opengl PRIVATE
@@ -37,3 +38,8 @@ set_target_properties(cg-opengl PROPERTIES
 
 # Tell CMake to copy all shaders to the build directory
 file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR}/bin)
+
+# If debug, send -DDEBUG to the compiler
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(cg-opengl PRIVATE _DEBUG)
+endif()
