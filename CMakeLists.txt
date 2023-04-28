@@ -14,12 +14,14 @@ find_package(glfw3 REQUIRED)
 
 add_executable(cg-opengl
         src/main.cpp
+        src/Shader.cpp
 )
 
 target_include_directories(cg-opengl PRIVATE
         ${OPENGL_INCLUDE_DIRS}
         ${GLEW_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
+        include
 )
 
 target_link_libraries(cg-opengl
