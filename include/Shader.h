@@ -7,6 +7,13 @@
 
 #include <GL/glew.h>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
+
+///TODO: Forward declare glm classes declarations
+namespace glm {}
+
 
 /**
  * decimals from 0 to 9 in hex:
@@ -72,11 +79,26 @@ public:
     inline std::string GetFragmentShaderCode() const { return m_fragmentShaderCode;}
     inline constexpr unsigned int GetFragmentShaderID() const { return m_fragmentShaderID;}
     inline constexpr unsigned int GetProgramID() const { return m_programID;}
+    inline constexpr GLint GetVertLocation() const { return m_vertLocation;}
     ShaderDebugInfo& GetDebugInfo() const { return *m_debugInfo; }
 
     void Compile();
     void DisableDebug() { m_debug = false;}
     void Use() { glUseProgram(m_programID); }
+
+    /// Set uniforms
+    void SetUniform(const std::string& name, bool value) const;
+    void SetUniform(const std::string& name, int value) const;
+    void SetUniform(const std::string& name, float value) const;
+    void SetUniform(const std::string& name, const glm::vec3& value) const;
+    void SetUniform(const std::string& name, const glm::vec4& value) const;
+    void SetUniform(const std::string& name, const glm::mat3& value) const;
+    void SetUniform(const std::string& name, const glm::mat4& value) const;
+    void SetUniform(const std::string& name, const glm::vec2& value) const;
+    void SetUniform(const std::string& name, float x, float y) const;
+    void SetUniform(const std::string& name, float x, float y, float z) const;
+    void SetUniform(const std::string& name, float x, float y, float z, float w) const;
+    void SetUniform(const std::string& name, const glm::mat2& mat) const;
 
 private:
     GLuint m_programID;
@@ -86,6 +108,8 @@ private:
     std::string m_fragmentShaderCode;
     ShaderDebugInfo* m_debugInfo;
     bool m_debug;
+
+    GLint m_vertLocation;
 
     enum {
         VERTEX_SHADER,
