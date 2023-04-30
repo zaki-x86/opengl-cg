@@ -138,7 +138,6 @@ private:
 
     void CompileVertexShader() {
         
-        
         const char* shaderCode = m_vertexShaderCode.c_str();
         m_vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(m_vertexShaderID, 1, &shaderCode, NULL);
