@@ -38,7 +38,7 @@ struct OpenGLConfig {
 
 class OpenGLApp {
 public:
-    OpenGLApp(const OpenGLConfig& config = { true, GL_LESS, true, GL_BACK, true, true });
+    OpenGLApp(const OpenGLConfig& config = { true, GL_LESS, false, GL_BACK, true, true });
 
     OpenGLApp(const OpenGLApp& other) = delete;
 
@@ -50,7 +50,7 @@ public:
 
     OpenGLApp& operator=(OpenGLApp&& other) = delete;
 
-    bool init();
+    bool initialized();
 
     void setClearColor(float r, float g, float b, float a);
 

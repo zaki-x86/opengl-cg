@@ -1,6 +1,15 @@
 #include "OpenGLApp.h"
 
-OpenGLApp::OpenGLApp(const OpenGLConfig& config) {
+OpenGLApp::OpenGLApp(const OpenGLConfig& config)
+    : m_initialized(false), m_enableDepthTest(false), m_enableCullFace(false) 
+{
+    // start GLEW extension handler
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) {
+        std::cout << "Failed to initialize GLEW" << std::endl;
+        m_initialized = false;
+    }
+
     if(config.logOpenGLInfo) {
         printf("Renderer: %s\n", glGetString(GL_RENDERER));
         printf("OpenGL version supported: %s\n", glGetString(GL_VERSION));
@@ -14,31 +23,25 @@ OpenGLApp::OpenGLApp(const OpenGLConfig& config) {
     if(config.enableCullFace) {
         glEnable(GL_CULL_FACE);
         glCullFace(config.cullFace);
+        m_enableCullFace = true;
     }
 
     if(config.enableDepthTest) {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(config.depthFunc);
+        m_enableDepthTest = true;
     }
 
+    m_initialized = true;
 }
 
 OpenGLApp::~OpenGLApp() {
 }
 
-bool OpenGLApp::init() {
-    // start GLEW extension handler
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK) {
-        std::cout << "Failed to initialize GLEW" << std::endl;
-        return false;
-    }
-
-    // get version infoWindowHandler
-
+bool OpenGLApp::initialized() {
     
     
-    return true;
+    return m_initialized;
 }
 
 void OpenGLApp::setClearColor(float r, float g, float b, float a) {
