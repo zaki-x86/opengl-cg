@@ -44,12 +44,20 @@ Mesh& Mesh::operator=(Mesh&& other) {
     return *this;
 }
 
-std::vector<Vertf>& Mesh::vertices() {
-    return m_vertices;
+Vertf* Mesh::vertices() {
+    return m_vertices.data();
 }
 
-const std::vector<Vertf>& Mesh::vertices() const {
-    return m_vertices;
+const Vertf* Mesh::vertices() const {
+    return m_vertices.data();
+}
+
+unsigned int* Mesh::indices() {
+    return m_indices.data();
+}
+
+const unsigned int* Mesh::indices() const {
+    return m_indices.data();
 }
 
 void Mesh::addVertex(const Vertf& vertex) {
@@ -66,4 +74,41 @@ void Mesh::addIndices(const std::vector<GLuint>& indices) {
 
 void Mesh::addIndices(std::vector<GLuint>&& indices) {
     m_indices.insert(m_indices.end(), std::make_move_iterator(indices.begin()), std::make_move_iterator(indices.end()));
+}
+
+unsigned int Mesh::vertexCount() const {
+    return m_vertices.size();
+}
+
+unsigned int Mesh::indexCount() const {
+    return m_indices.size();
+}
+
+unsigned int Mesh::perVertexCount() const {
+    return m_vertices[0].size();
+}
+
+unsigned int Mesh::size() const {
+    return m_vertices.size() * m_vertices[0].size();
+}
+
+unsigned long Mesh::vertexByteCount() const {
+    return m_vertices.size() * m_vertices[0].size() * sizeof(vertex_type::value_type);
+}
+
+unsigned long Mesh::indexByteCount() const {
+    return m_indices.size() * sizeof(index_type);
+}
+
+std::vector<Mesh::vertex_type::value_type> Mesh::data() {
+    std::vector<float> vertices;
+    for (size_t i = 0; i < vertexCount(); i++)
+    {
+        for (size_t j = 0; j < perVertexCount(); j++)
+        {
+            vertices.push_back(m_vertices[i][j]);
+        }
+    }
+
+    return vertices;
 }
