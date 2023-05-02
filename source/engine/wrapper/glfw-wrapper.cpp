@@ -64,6 +64,10 @@ std::pair<int, int> GLFWWrapper::getFramebufferSize() const {
     return std::make_pair(width, height);
 }
 
+GLFWwindow* GLFWWrapper::getWindow() const {
+    return m_window;
+}
+
 
 void GLFWWrapper::setTitle(const std::string& title) {
     glfwSetWindowTitle(m_window, title.c_str());
