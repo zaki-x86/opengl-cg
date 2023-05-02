@@ -13,6 +13,9 @@
 #include "engine/core/Vertex.h"
 #include "engine/core/Mesh.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 // settings
@@ -46,14 +49,14 @@ int main()
 
     // build and compile our shader program
     // ------------------------------------
-    // vertex shader
     Shader shader("/home/zaki/Tutorials/cg-opengl/build/bin/assets/shaders/triangle.vert", "/home/zaki/Tutorials/cg-opengl/build/bin/assets/shaders/triangle.frag");
     shader.compile();
+    #ifdef _DEBUG
     ShaderDebugInfo debugInfo = shader.getDebugInfo();
     std::cout << "Vertex shader info log: " << debugInfo.VertexShaderCompileInfo << std::endl;
     std::cout << "Fragment shader info log: " << debugInfo.FragmentShaderCompileInfo << std::endl;
     std::cout << "Shader program info log: " << debugInfo.LinkInfo << std::endl;
-    GL_CHECK_ERRORS();
+    #endif
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -72,8 +75,29 @@ int main()
     square.addIndices({0, 1, 3, 1, 2, 3});
     
     std::vector<float> vertData = square.data();
-    float* vertices = vertData.data();
     unsigned int* indices = square.indices();
+
+
+    VertexArray vao;
+    vao.bind();
+
+    BufferInfo<float> vboInfo{};
+    vboInfo.type = VERTEX_BUFFER;
+    vboInfo.target = GL_ARRAY_BUFFER;
+    vboInfo.data = vertData.data();
+    vboInfo.size = square.vertexByteCount();
+    vboInfo.usage = GL_STATIC_DRAW;
+    
+    Buffer vbo(vboInfo);
+
+    BufferInfo<unsigned int> eboInfo{};
+    eboInfo.type = INDEX_BUFFER;
+    eboInfo.target = GL_ELEMENT_ARRAY_BUFFER;
+    eboInfo.data = indices;
+    eboInfo.size = square.indexByteCount();
+    eboInfo.usage = GL_STATIC_DRAW;
+    
+    Buffer ebo(eboInfo);
 
     // position pointer info
     VertexArrayInfo vaoInfo{};
@@ -92,30 +116,11 @@ int main()
     vaoInfo2.normalized = GL_FALSE;
     vaoInfo2.stride = 6 * sizeof(float);
     vaoInfo2.offset = 3 * sizeof(float);
-
-    VertexArray vao;
-    vao.bind();
-
-    BufferInfo<float> vboInfo{};
-    vboInfo.type = VERTEX_BUFFER;
-    vboInfo.target = GL_ARRAY_BUFFER;
-    vboInfo.data = vertices;
-    vboInfo.size = square.vertexByteCount();
-    vboInfo.usage = GL_STATIC_DRAW;
-    
-    Buffer vbo(vboInfo);
-
-    BufferInfo<unsigned int> eboInfo{};
-    eboInfo.type = INDEX_BUFFER;
-    eboInfo.target = GL_ELEMENT_ARRAY_BUFFER;
-    eboInfo.data = indices;
-    eboInfo.size = square.indexByteCount();
-    eboInfo.usage = GL_STATIC_DRAW;
-    
-    Buffer ebo(eboInfo);
-
     vao.createPointers({vaoInfo, vaoInfo2});
     vao.unbind();
+
+    // Transformation
+    glm::mat4 upTransform = glm::mat4(1.0);
 
 
     // uncomment this call to draw in wireframe polygons.
@@ -136,10 +141,55 @@ int main()
 
         // draw our first triangle
         shader.use();
-        vao.bind(); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        vao.bind();
+
+        if (glfwGetKey(window.getWindow(), GLFW_KEY_UP) == GLFW_PRESS) {
+            upTransform = glm::translate(upTransform, glm::vec3(0.0f, 0.001f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_DOWN) == GLFW_PRESS) {
+            upTransform = glm::translate(upTransform, glm::vec3(0.0f, -0.001f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_LEFT) == GLFW_PRESS) {
+            upTransform = glm::translate(upTransform, glm::vec3(-0.001f, 0.0f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            upTransform = glm::translate(upTransform, glm::vec3(0.001f, 0.0f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_R) == GLFW_PRESS) {
+            upTransform = glm::mat4(1.0);
+        }
+
+        // Define rotations 
+        if (glfwGetKey(window.getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
+            upTransform = glm::rotate(upTransform, glm::radians(0.1f), glm::vec3(1.0f, 0.0f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_S) == GLFW_PRESS) {
+            upTransform = glm::rotate(upTransform, glm::radians(-0.1f), glm::vec3(1.0f, 0.0f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
+            upTransform = glm::rotate(upTransform, glm::radians(0.1f), glm::vec3(0.0f, 1.0f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
+            upTransform = glm::rotate(upTransform, glm::radians(-0.1f), glm::vec3(0.0f, 1.0f, 0.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_Q) == GLFW_PRESS) {
+            upTransform = glm::rotate(upTransform, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_E) == GLFW_PRESS) {
+            upTransform = glm::rotate(upTransform, glm::radians(-0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        }
+
+        // Define scaling 
+        if (glfwGetKey(window.getWindow(), GLFW_KEY_Z) == GLFW_PRESS) {
+            upTransform = glm::scale(upTransform, glm::vec3(1.001f, 1.001f, 1.001f));
+        }
+        else if (glfwGetKey(window.getWindow(), GLFW_KEY_X) == GLFW_PRESS) {
+            upTransform = glm::scale(upTransform, glm::vec3(0.999f, 0.999f, 0.999f));
+        }
+        
+        shader.setUniform("transform", upTransform);
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // glBindVertexArray(0); // no need to unbind it every time 
  
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
