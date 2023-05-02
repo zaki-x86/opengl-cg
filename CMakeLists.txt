@@ -15,11 +15,7 @@ find_package(glfw3 REQUIRED)
 file(GLOB_RECURSE SOURCES source/*.cpp)
 
 add_executable(cg-opengl
-        source/main.cpp
-        source/engine/wrapper/glfw-wrapper.cpp
-        source/engine/opengl/OpenGLApp.cpp
-        source/engine/core/Vertex.cpp
-        source/engine/core/Mesh.cpp
+        ${SOURCES}
 )
 
 target_include_directories(cg-opengl PRIVATE
@@ -45,5 +41,5 @@ file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 # If debug, send -DDEBUG to the compiler
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(cg-opengl PRIVATE _DEBUG ggdb3)
+    target_compile_definitions(cg-opengl PRIVATE _DEBUG ggdb3 EXCEPTIONS_ENABLED)
 endif()
