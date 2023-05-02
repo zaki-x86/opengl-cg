@@ -12,16 +12,14 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
+file(GLOB_RECURSE SOURCES source/*.cpp)
+
 add_executable(cg-opengl
-        src/main.cpp
-        src/Shader.cpp
-        src/Triangle.cpp
-        src/Vertex.cpp
-        src/Mesh.cpp
-        src/stb_image.cpp
-        src/Texture.cpp
-        src/utils.cpp
-        src/log.cpp
+        source/main.cpp
+        source/engine/wrapper/glfw-wrapper.cpp
+        source/engine/opengl/OpenGLApp.cpp
+        source/engine/core/Vertex.cpp
+        source/engine/core/Mesh.cpp
 )
 
 target_include_directories(cg-opengl PRIVATE
@@ -42,8 +40,8 @@ set_target_properties(cg-opengl PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
-# Tell CMake to copy all shaders to the build directory
-file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR}/bin)
+# Tell CMake to copy all shaders and assets to the build directory
+file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 # If debug, send -DDEBUG to the compiler
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

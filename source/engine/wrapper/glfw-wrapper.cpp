@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 
-GLFWWrapper::GLFWWrapper(const GLFWConfig& config) : m_initialized(false) {
+GLFWWrapper::GLFWWrapper(const GLFWConfig& config, int width, int height, const std::string& title) : m_initialized(false) {
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialize GLFW");
     }
@@ -16,7 +16,7 @@ GLFWWrapper::GLFWWrapper(const GLFWConfig& config) : m_initialized(false) {
     if(config.framebufferSizeCallback)
         glfwSetFramebufferSizeCallback(m_window, config.framebufferSizeCallback);
 
-    m_window = glfwCreateWindow(600, 800, "window", NULL, NULL);
+    m_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (!m_window) {
         std::cerr << "Failed to create GLFW m_window" << std::endl;
     }

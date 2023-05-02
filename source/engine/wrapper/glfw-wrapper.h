@@ -26,7 +26,7 @@ public:
     using ConfigType = GLFWConfig;
 
 
-    GLFWWrapper(const GLFWConfig& config);
+    GLFWWrapper(const GLFWConfig& config, int width, int height, const std::string& title);
 
     GLFWWrapper(const GLFWWrapper& other) = delete;
 

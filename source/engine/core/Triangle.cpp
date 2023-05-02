@@ -30,7 +30,7 @@ Triangle::~Triangle()
 
 void Triangle::Draw()
 {
-    m_shader.Use();
+    m_shader.use();
     glBindVertexArray(m_vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }

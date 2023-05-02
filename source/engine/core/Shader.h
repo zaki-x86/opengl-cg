@@ -24,6 +24,7 @@ namespace glm {}
 #define VERTEX_SHADER_COMPILE_SUCCESS 0b00000001
 #define FRAGMENT_SHADER_COMPILE_SUCCESS 0b00000010
 #define SHADER_LINK_SUCCESS 0b00000100
+
 #define SHADER_COMPILE_FAILED 0b10000000
 #define VERTEX_SHADER_COMPILE_FAILED 0b00000001
 #define FRAGMENT_SHADER_COMPILE_FAILED 0b00000010
@@ -32,6 +33,9 @@ namespace glm {}
 #define FRAGMENT_SHADER_FILE_READ_FAILED 0b00010000
 #define VERTEX_SHADER_FILE_EMPTY 0b00100000
 #define FRAGMENT_SHADER_FILE_EMPTY 0b01000000
+
+#define SHADER_VALID_PROGRAM 0b00001000
+#define SHADER_INVALID_PROGRAM 0b01000000
 
 struct ShaderDebugInfo {
     ShaderDebugInfo() : status(0), VertexShaderCompileInfo(""), FragmentShaderCompileInfo(""), LinkInfo("") {}
@@ -58,6 +62,7 @@ struct ShaderDebugInfo {
     std::string VertexShaderCompileInfo;
     std::string FragmentShaderCompileInfo;
     std::string LinkInfo;
+    std::string ValidateInfo;
 };
 
 
@@ -72,33 +77,45 @@ public:
     
     ~Shader();
 
-    void SetShader(const std::string& filePath, uint8_t shaderType);
+    void setShader(const std::string& filePath, uint8_t shaderType);
 
-    inline std::string GetVertexShaderCode() const { return m_vertexShaderCode; }
-    inline constexpr unsigned int GetVertexShaderID() const { return m_vertexShaderID;}
-    inline std::string GetFragmentShaderCode() const { return m_fragmentShaderCode;}
-    inline constexpr unsigned int GetFragmentShaderID() const { return m_fragmentShaderID;}
-    inline constexpr unsigned int GetProgramID() const { return m_programID;}
-    inline constexpr GLint GetVertLocation() const { return m_vertLocation;}
-    ShaderDebugInfo& GetDebugInfo() const { return *m_debugInfo; }
+    inline constexpr unsigned int getID() const { return m_programID;}
+    ShaderDebugInfo& getDebugInfo() const { return *m_debugInfo; }
 
-    void Compile();
-    void DisableDebug() { m_debug = false;}
-    void Use() { glUseProgram(m_programID); }
+    void compile();
+    void disableDebug() { m_debug = false;}
+    void use() { glUseProgram(m_programID); }
 
     /// Set uniforms
-    void SetUniform(const std::string& name, bool value) const;
-    void SetUniform(const std::string& name, int value) const;
-    void SetUniform(const std::string& name, float value) const;
-    void SetUniform(const std::string& name, const glm::vec3& value) const;
-    void SetUniform(const std::string& name, const glm::vec4& value) const;
-    void SetUniform(const std::string& name, const glm::mat3& value) const;
-    void SetUniform(const std::string& name, const glm::mat4& value) const;
-    void SetUniform(const std::string& name, const glm::vec2& value) const;
-    void SetUniform(const std::string& name, float x, float y) const;
-    void SetUniform(const std::string& name, float x, float y, float z) const;
-    void SetUniform(const std::string& name, float x, float y, float z, float w) const;
-    void SetUniform(const std::string& name, const glm::mat2& mat) const;
+    void setUniform(const std::string& name, bool value) const;
+    void setUniform(const std::string& name, int value) const;
+    void setUniform(const std::string& name, float value) const;
+    void setUniform(const std::string& name, const glm::vec3& value) const;
+    void setUniform(const std::string& name, const glm::vec4& value) const;
+    void setUniform(const std::string& name, const glm::mat3& value) const;
+    void setUniform(const std::string& name, const glm::mat4& value) const;
+    void setUniform(const std::string& name, const glm::vec2& value) const;
+    void setUniform(const std::string& name, float x, float y) const;
+    void setUniform(const std::string& name, float x, float y, float z) const;
+    void setUniform(const std::string& name, float x, float y, float z, float w) const;
+    void setUniform(const std::string& name, const glm::mat2& mat) const;
+
+    /// Get uniforms
+    GLint getUniformLocation(const std::string& name) const;
+
+    /// Read uniform values
+    bool getUniform(const std::string& name, bool& value) const;
+    bool getUniform(const std::string& name, int& value) const;
+    bool getUniform(const std::string& name, float& value) const;
+    bool getUniform(const std::string& name, glm::vec3& value) const;
+    bool getUniform(const std::string& name, glm::vec4& value) const;
+    bool getUniform(const std::string& name, glm::mat3& value) const;
+    bool getUniform(const std::string& name, glm::mat4& value) const;
+    bool getUniform(const std::string& name, glm::vec2& value) const;
+    bool getUniform(const std::string& name, glm::mat2& value) const;
+
+    /// Get attributes
+    GLint getAttributeLocation(const std::string& name) const;
 
 private:
     GLuint m_programID;
@@ -108,8 +125,6 @@ private:
     std::string m_fragmentShaderCode;
     ShaderDebugInfo* m_debugInfo;
     bool m_debug;
-
-    GLint m_vertLocation;
 
     enum {
         VERTEX_SHADER,

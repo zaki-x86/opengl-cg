@@ -24,7 +24,8 @@ public:
     using WindowType = typename WindowHandler::WindowType;
     using WindowPtr = typename WindowHandler::WindowPtr;
 
-    Window(WindowHandlerConfig config) : WindowHandler(config){}
+    Window(WindowHandlerConfig config, int width, int height, const std::string& title) 
+    : WindowHandler(config, width, height, title) {}
 
 };
 

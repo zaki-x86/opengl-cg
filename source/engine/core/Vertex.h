@@ -1,7 +1,10 @@
+#ifndef _VERTEX_H_
+#define _VERTEX_H_
+
 #include <tuple>
 #include <vector>
 
-template<typename _Ty = float>
+template<typename _Ty>
 struct Pos {
 public:
     Pos() : m_xyz({ 0, 0, 0 }) {}
@@ -28,6 +31,22 @@ public:
         return m_xyz[0];
     }
 
+    _Ty& y() const {
+        return m_xyz[1];
+    }
+
+    _Ty& y() {
+        return m_xyz[1];
+    }
+
+    _Ty& z() const {
+        return m_xyz[2];
+    }
+
+    _Ty& z() {
+        return m_xyz[2];
+    }
+
     const _Ty* xyz() const {
         return m_xyz.data();
     }
@@ -40,7 +59,7 @@ private:
     std::array<_Ty, 3> m_xyz;
 };
 
-template<typename _Ty = float>
+template<typename _Ty>
 struct Color {
 public:
     Color() : m_rgb({ 0, 0, 0 }) {}
@@ -93,7 +112,7 @@ private:
     std::array<_Ty, 3> m_rgb;
 };
 
-template<typename _Ty = float>
+template<typename _Ty>
 struct Tex2D {
 public:
     Tex2D() : m_uv({ 0, 0 }) {}
@@ -122,7 +141,7 @@ private:
     std::pair<_Ty, _Ty> m_uv;
 };
 
-template<typename _Ty = float>
+template<typename _Ty>
 struct Normal {
 public:
     Normal() : m_normal({ 0, 0, 0 }) {}
@@ -151,7 +170,7 @@ private:
     std::array<_Ty, 3> m_normal;
 };
 
-template<typename _Ty = float>
+template<typename _Ty>
 struct Vertex {
 public:
     using value_type = _Ty;
@@ -313,3 +332,5 @@ public:
 private:
     std::vector<_Ty> m_data;
 };
+
+#endif // !_VERTEX_H_
