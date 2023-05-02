@@ -121,8 +121,6 @@ private:
     GLuint m_programID;
     GLuint m_vertexShaderID;
     GLuint m_fragmentShaderID;
-    std::string m_vertexShaderCode;
-    std::string m_fragmentShaderCode;
     ShaderDebugInfo* m_debugInfo;
     bool m_debug;
 
@@ -131,67 +129,23 @@ private:
         FRAGMENT_SHADER
     };
 
-    void _readShaderFile(const std::string& filePath, uint8_t shaderType) {
+    std::string _readShaderFile(const std::string& filePath) {
         std::ifstream shaderFile(filePath);
         if (!shaderFile.is_open()) {
             #ifdef EXCEPTIONS_ENABLED
             throw std::runtime_error("Failed to open shader file: " + filePath);
             #endif // EXCEPTIONS_ENABLED
         }
-
-        if (shaderType == VERTEX_SHADER)
-            m_vertexShaderCode = std::string((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-        else if (shaderType == FRAGMENT_SHADER)
-            m_fragmentShaderCode = std::string((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-
-        if (m_vertexShaderCode.empty() || m_fragmentShaderCode.empty()) {
+        
+        std::string res((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
+        
+        if (res.empty()) {
             #ifdef EXCEPTIONS_ENABLED
             throw std::runtime_error("Shader file is empty: " + filePath);
             #endif // EXCEPTIONS_ENABLED
         }
-    }
 
-    void CompileVertexShader() {
-        
-        const char* shaderCode = m_vertexShaderCode.c_str();
-        m_vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(m_vertexShaderID, 1, &shaderCode, NULL);
-        glCompileShader(m_vertexShaderID);
-
-        if(m_debug) {
-            int success;
-            glGetShaderiv(m_vertexShaderID, GL_COMPILE_STATUS, &success);
-            if(!success) {
-                m_debugInfo->status = SHADER_COMPILE_FAILED || VERTEX_SHADER_COMPILE_FAILED;
-                char infoLog[512];
-                glGetShaderInfoLog(m_vertexShaderID, 512, NULL, infoLog);
-                m_debugInfo->VertexShaderCompileInfo = std::string(infoLog);
-            }
-            m_debugInfo->status = SHADER_COMPILE_SUCCESS || VERTEX_SHADER_COMPILE_SUCCESS;
-            m_debugInfo->VertexShaderCompileInfo = std::string("Vertex shader compiled successfully");
-        }
-
-        return;
-    }
-
-    void CompileFragmentShader() {
-        const char* shaderCode = m_fragmentShaderCode.c_str();
-        m_fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(m_fragmentShaderID, 1, &shaderCode, NULL);
-        glCompileShader(m_fragmentShaderID);
-        
-        if(m_debug) {
-            int success;
-            glGetShaderiv(m_fragmentShaderID, GL_COMPILE_STATUS, &success);
-            if(!success) {
-                m_debugInfo->status = SHADER_COMPILE_FAILED || FRAGMENT_SHADER_COMPILE_FAILED;
-                char infoLog[512];
-                glGetShaderInfoLog(m_fragmentShaderID, 512, NULL, infoLog);
-                m_debugInfo->FragmentShaderCompileInfo = std::string(infoLog);
-            }
-            m_debugInfo->status = SHADER_COMPILE_SUCCESS || FRAGMENT_SHADER_COMPILE_SUCCESS;
-            m_debugInfo->FragmentShaderCompileInfo = "Fragment shader compiled successfully";
-        }
+        return res;
     }
 };
 
