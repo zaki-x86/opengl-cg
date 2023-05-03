@@ -202,6 +202,12 @@ public:
 
     Vertex(Pos_t&& pos, Color_t&& color)
         : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2], color.rgb()[0], color.rgb()[1], color.rgb()[2] }) {}
+
+    Vertex(const Pos_t& pos, const UV& uv)
+        : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2], uv.uv().first, uv.uv().second }) {}
+
+    Vertex(Pos_t&& pos, UV&& uv)
+        : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2], uv.uv().first, uv.uv().second }) {}
     
     Vertex(const Pos_t& pos)
         : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2] }) {}
