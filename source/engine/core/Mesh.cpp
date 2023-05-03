@@ -60,6 +60,14 @@ const unsigned int* Mesh::indices() const {
     return m_indices.data();
 }
 
+void Mesh::setVertices(const std::vector<Vertf>& vertices) {
+    m_vertices = vertices;
+}
+
+void Mesh::setVertices(std::vector<Vertf>&& vertices) {
+    m_vertices = std::move(vertices);
+}
+
 void Mesh::addVertex(const Vertf& vertex) {
     m_vertices.push_back(vertex);
 }

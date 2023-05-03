@@ -72,6 +72,10 @@ public:
 
     const unsigned int* indices() const;
 
+    void setVertices(const std::vector<Vertf>& vertices);
+
+    void setVertices(std::vector<Vertf>&& vertices);
+
     void addVertex(const Vertf& vertex);
 
     void addVertex(Vertf&& vertex);

@@ -18,6 +18,11 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "engine/core/Cube.hpp"
+#include "engine/core/Camera.hpp"
+
+void processInput2(GLFWwindow *window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -30,6 +35,13 @@ using Colorf = Color<float>;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
 
 int main()
 {
@@ -58,33 +70,25 @@ int main()
         return -1;
     }
 
+    // Handling mouse events
+    glfwSetCursorPosCallback(window.getWindow(), mouse_callback);
+    glfwSetScrollCallback(window.getWindow(), scroll_callback);
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
+    Cube cube(CubeType::POS_NORM);
+    Cube lightCube(CubeType::POS_NORM); // light source
 
-    //Shader shader("/home/zaki/Tutorials/cg-opengl/assets/shaders/cube.vert", "/home/zaki/Tutorials/cg-opengl/assets/shaders/cube.frag");
-    //Texture tex("/home/zaki/Tutorials/cg-opengl/assets/images/container.jpg", GL_TEXTURE0);
-    Cube cube;
-    cube.setShaders("/home/zaki/Tutorials/cg-opengl/assets/shaders/texture/cube.vert", "/home/zaki/Tutorials/cg-opengl/assets/shaders/texture/cube.frag");
-    cube.setTexture("/home/zaki/Tutorials/cg-opengl/assets/images/container.jpg");
-    //////////////////////////////////////////////////////////
+    cube.setShaders("/home/zaki/Tutorials/cg-opengl/assets/shaders/lights/cube.vs", "/home/zaki/Tutorials/cg-opengl/assets/shaders/lights/cube.fs");
 
-    // Define model, view and projection matrices
-    glm::mat4 model = glm::mat4(1.0);
-    glm::mat4 view = glm::mat4(1.0);
-    glm::mat4 projection = glm::mat4(1.0);
+    lightCube.setShaders("/home/zaki/Tutorials/cg-opengl/assets/shaders/lights/lightCube.vs", "/home/zaki/Tutorials/cg-opengl/assets/shaders/lights/lightCube.fs");
 
-    // Define view matrix
-    // Note that we're translating the scene in the reverse direction of where we want to move
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-    // Define projection matrix
-    // Note that we're using glm::perspective instead of glm::ortho
-    // glm::perspective takes in fov in degrees, so we convert it to radians
-    projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
-    // uncomment this call to draw in wireframe polygons.
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Define light position
+    glm::vec3 lightPos(1.0f, 0.5f, 0.31f);
 
     // render loop
     // -----------
@@ -92,55 +96,29 @@ int main()
     {
         _update_fps_counter(window.getWindow());
         _update_delta_time(&deltaTime, &lastFrame);
-        
 
         // input
         // -----
-        processInput(window.getWindow());
+        processInput2(window.getWindow());
 
         // render
         // ------
-        app.setClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         app.clear();
-        cube.bindTexture();
 
         cube.useShader();
+        cube.getShader().setUniform("objectColor", 1.0f, 0.5f, 0.31f);
+        cube.getShader().setUniform("lightColor", 1.0f, 1.0f, 1.0f);
+        cube.getShader().setUniform("lightPos", lightPos);
+        cube.getShader().setUniform("viewPos", camera.Position);
 
-        if (glfwGetKey(window.getWindow(), GLFW_KEY_UP) == GLFW_PRESS) {
-            model = glm::translate(model, glm::vec3(0.0f, 0.001f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_DOWN) == GLFW_PRESS) {
-            model = glm::translate(model, glm::vec3(0.0f, -0.001f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_LEFT) == GLFW_PRESS) {
-            model = glm::translate(model, glm::vec3(-0.001f, 0.0f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            model = glm::translate(model, glm::vec3(0.001f, 0.0f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_R) == GLFW_PRESS) {
-            model = glm::mat4(1.0);
-        }
-
-        // Define rotations 
-        if (glfwGetKey(window.getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.1f), glm::vec3(1.0f, 0.0f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_S) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(-0.1f), glm::vec3(1.0f, 0.0f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(-0.1f), glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_Q) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
-        }
-        else if (glfwGetKey(window.getWindow(), GLFW_KEY_E) == GLFW_PRESS) {
-            model = glm::rotate(model, glm::radians(-0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
-        }
+        // view/projection transformations
+        glm::mat4 model = glm::mat4(1.0);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        cube.getShader().setUniform("model", model);
+        cube.getShader().setUniform("view", view);
+        cube.getShader().setUniform("projection", projection);
+        cube.draw();
 
         // Define scaling 
         if (glfwGetKey(window.getWindow(), GLFW_KEY_Z) == GLFW_PRESS) {
@@ -150,15 +128,16 @@ int main()
             model = glm::scale(model, glm::vec3(0.999f, 0.999f, 0.999f));
         }
 
-        cube.getShader().setUniform("model", model);
-        cube.getShader().setUniform("view", view);
-        cube.getShader().setUniform("projection", projection);
-
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        //vao.bind();
-        //glBindVertexArray(vao.id());
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
-        cube.draw();
+        // position the light cube at (1.0f, 0.5f, 0.31f)
+        lightCube.useShader();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightCube.getShader().setUniform("model", model);
+        lightCube.getShader().setUniform("view", view);
+        lightCube.getShader().setUniform("projection", projection);
+        lightCube.getShader().setUniform("lightPos", lightPos);
+        lightCube.draw();
  
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -169,168 +148,50 @@ int main()
     return 0;
 }
 
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    (void)window;
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
 
-// std::tuple<VertexArray, Shader> createSquareMesh() {
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
 
-//     static Shader shader("/home/zaki/Tutorials/cg-opengl/build/bin/assets/shaders/triangle.vert", "/home/zaki/Tutorials/cg-opengl/build/bin/assets/shaders/triangle.frag");
-//     shader.compile();
-//     #ifdef _DEBUG
-//     ShaderDebugInfo debugInfo = shader.getDebugInfo();
-//     std::cout << "Vertex shader info log: " << debugInfo.VertexShaderCompileInfo << std::endl;
-//     std::cout << "Fragment shader info log: " << debugInfo.FragmentShaderCompileInfo << std::endl;
-//     std::cout << "Shader program info log: " << debugInfo.LinkInfo << std::endl;
-//     #endif
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
-//     static std::vector<Vertf> _v = {
-//         Vertf(Posf( 0.5f,  0.5f, 0.0f), Colorf(1.0f, 0.0f, 0.0f)),  // top right
-//         Vertf(Posf( 0.5f, -0.5f, 0.0f), Colorf(0.0f, 0.0f, 0.0f)),  // bottom right
-//         Vertf(Posf(-0.5f, -0.5f, 0.0f), Colorf(0.0f, 0.0f, 0.0f)),  // bottom left
-//         Vertf(Posf(-0.5f,  0.5f, 0.0f), Colorf(0.0f, 0.0f, 0.0f))   // top left 
-//     };
+    lastX = xpos;
+    lastY = ypos;
 
-//     static Mesh square(_v);
-//     square.addIndices({0, 1, 3, 1, 2, 3});
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
 
-//     static std::vector<float> vertData = square.data();
-//     static unsigned int* indices = square.indices();
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    (void)window;
+    (void)xoffset;
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
 
+void processInput2(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 
-//     static VertexArray vao;
-//     vao.create();
-//     vao.bind();
-
-//     static BufferInfo<float> vboInfo{};
-//     vboInfo.type = VERTEX_BUFFER;
-//     vboInfo.target = GL_ARRAY_BUFFER;
-//     vboInfo.data = vertData.data();
-//     vboInfo.size = square.vertexByteCount();
-//     vboInfo.usage = GL_STATIC_DRAW;
-    
-//     static Buffer vbo(vboInfo);
-
-//     static BufferInfo<unsigned int> eboInfo{};
-//     eboInfo.type = INDEX_BUFFER;
-//     eboInfo.target = GL_ELEMENT_ARRAY_BUFFER;
-//     eboInfo.data = indices;
-//     eboInfo.size = square.indexByteCount();
-//     eboInfo.usage = GL_STATIC_DRAW;
-    
-//     static Buffer ebo(eboInfo);
-
-//     // position pointer info
-//     static VertexArrayInfo vaoInfo{};
-//     vaoInfo.index = 0;
-//     vaoInfo.size = 3;
-//     vaoInfo.type = GL_FLOAT;
-//     vaoInfo.normalized = GL_FALSE;
-//     vaoInfo.stride = 6 * sizeof(float);
-//     vaoInfo.offset = 0;
-
-//     // color pointer info
-//     static VertexArrayInfo vaoInfo2{};
-//     vaoInfo2.index = 1;
-//     vaoInfo2.size = 3;
-//     vaoInfo2.type = GL_FLOAT;
-//     vaoInfo2.normalized = GL_FALSE;
-//     vaoInfo2.stride = 6 * sizeof(float);
-//     vaoInfo2.offset = 3 * sizeof(float);
-//     vao.linkAttribFast(vaoInfo);
-//     vao.linkAttribFast(vaoInfo2);
-//     vao.unbind();
-
-//     return std::make_tuple(vao, shader);
-// }
-
-// std::tuple<Mesh, VertexArray, Buffer, Shader, Texture> createCubeMesh() {
-//     Shader shader("/home/zaki/Tutorials/cg-opengl/assets/shaders/cube.vert", "/home/zaki/Tutorials/cg-opengl/assets/shaders/cube.frag");
-//     shader.compile();
-//     #ifdef _DEBUG
-//     ShaderDebugInfo debugInfo = shader.getDebugInfo();
-//     std::cout << "Vertex shader info log: " << debugInfo.VertexShaderCompileInfo << std::endl;
-//     std::cout << "Fragment shader info log: " << debugInfo.FragmentShaderCompileInfo << std::endl;
-//     std::cout << "Shader program info log: " << debugInfo.LinkInfo << std::endl;
-//     #endif
-
-//     Mesh Cube({
-//         Vertf(Posf(-0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 0.0f)),
-//         Vertf(Posf( 0.5f, -0.5f, -0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf( 0.5f,  0.5f, -0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf( 0.5f,  0.5f, -0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf(-0.5f,  0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf(-0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 0.0f)),
-
-//         Vertf(Posf(-0.5f, -0.5f,  0.5f),  Tex2D(0.0f, 0.0f)),
-//         Vertf(Posf( 0.5f, -0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf( 0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf( 0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf(-0.5f,  0.5f,  0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf(-0.5f, -0.5f,  0.5f),  Tex2D(0.0f, 0.0f)),
-
-//         Vertf(Posf(-0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf(-0.5f,  0.5f, -0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf(-0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf(-0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf(-0.5f, -0.5f,  0.5f),  Tex2D(0.0f, 0.0f)),
-//         Vertf(Posf(-0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-
-//         Vertf(Posf(0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf(0.5f,  0.5f, -0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf(0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf(0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf(0.5f, -0.5f,  0.5f),  Tex2D(0.0f, 0.0f)),
-//         Vertf(Posf(0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-
-//         Vertf(Posf(-0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf( 0.5f, -0.5f, -0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf( 0.5f, -0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf( 0.5f, -0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf(-0.5f, -0.5f,  0.5f),  Tex2D(0.0f, 0.0f)),
-//         Vertf(Posf(-0.5f, -0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-
-//         Vertf(Posf(-0.5f,  0.5f, -0.5f),  Tex2D(0.0f, 1.0f)),
-//         Vertf(Posf( 0.5f,  0.5f, -0.5f),  Tex2D(1.0f, 1.0f)),
-//         Vertf(Posf( 0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf( 0.5f,  0.5f,  0.5f),  Tex2D(1.0f, 0.0f)),
-//         Vertf(Posf(-0.5f,  0.5f,  0.5f),  Tex2D(0.0f, 0.0f)),
-//         Vertf(Posf(-0.5f,  0.5f, -0.5f),  Tex2D(0.0f, 1.0f))
-//     });
-
-//     std::vector<float> vertData = Cube.data();
-
-//     VertexArray vao;
-//     vao.create();
-//     vao.bind();
-//     GL_LOG("Created VAO with ID: %d\n", vao.id());
-
-//     BufferInfo<float> vboInfo{};
-//     vboInfo.type = VERTEX_BUFFER;
-//     vboInfo.target = GL_ARRAY_BUFFER;
-//     vboInfo.data = vertData.data();
-//     vboInfo.size = Cube.vertexByteCount();
-//     vboInfo.usage = GL_STATIC_DRAW;
-//     Buffer<float> vbo(vboInfo);
-
-//     VertexArrayInfo posInfo{};
-//     posInfo.index = 0;
-//     posInfo.size = 3;
-//     posInfo.type = GL_FLOAT;
-//     posInfo.normalized = GL_FALSE;
-//     posInfo.stride = 5 * sizeof(float);
-//     posInfo.offset = 0;
-
-//     VertexArrayInfo texInfo{};
-//     texInfo.index = 1;
-//     texInfo.size = 2;
-//     texInfo.type = GL_FLOAT;
-//     texInfo.normalized = GL_FALSE;
-//     texInfo.stride = 5 * sizeof(float);
-//     texInfo.offset = 3;
-
-//     vao.linkAttribFast(posInfo);
-//     vao.linkAttribFast(texInfo);
-//     vao.unbind();
-
-//     Texture tex("/home/zaki/Tutorials/cg-opengl/assets/images/container.jpg", GL_TEXTURE0);
-
-//     return std::make_tuple(Cube, vao, vbo, shader, tex);
-// }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+}

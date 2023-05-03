@@ -142,11 +142,11 @@ private:
 };
 
 template<typename _Ty>
-struct Normal {
+struct Normal : public Pos<_Ty> {
 public:
-    Normal() : m_normal({ 0, 0, 0 }) {}
+    Normal() : Pos<_Ty>() {}
 
-    Normal(const std::array<_Ty, 3>& normal) : m_normal(normal) {}
+    Normal(_Ty x, _Ty y, _Ty z) : Pos<_Ty>(x, y, z) {}
 
     Normal(const Normal& other) = default;
 
@@ -157,17 +157,6 @@ public:
     Normal& operator=(const Normal& other) = default;
 
     Normal& operator=(Normal&& other) = default;
-
-    _Ty* xyz() const {
-        return m_normal.data();
-    }
-
-    _Ty* xyz() {
-        return m_normal.data();
-    }
-
-private:
-    std::array<_Ty, 3> m_normal;
 };
 
 template<typename _Ty>
@@ -208,6 +197,12 @@ public:
 
     Vertex(Pos_t&& pos, UV&& uv)
         : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2], uv.uv().first, uv.uv().second }) {}
+
+    Vertex(const Pos_t& pos, const Normal_t& normal)
+        : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2], normal.xyz()[0], normal.xyz()[1], normal.xyz()[2] }) {}
+
+    Vertex(Pos_t&& pos, Normal_t&& normal)
+        : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2], normal.xyz()[0], normal.xyz()[1], normal.xyz()[2] }) {}
     
     Vertex(const Pos_t& pos)
         : m_data({ pos.xyz()[0], pos.xyz()[1], pos.xyz()[2] }) {}
