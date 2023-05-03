@@ -1,28 +1,25 @@
 #include "OpenGLPipeline.h"
 
-VertexArray::VertexArray() {
+void VertexArray::create() {
     glGenVertexArrays(1, &m_id);
+    GL_CHECK_ERRORS();
 }
 
-VertexArray::~VertexArray() {
-    glDeleteVertexArrays(1, &m_id);
+template<typename _Ty>
+void VertexArray::linkAttrib(const Buffer<_Ty>& vbo, const VertexArrayInfo& info) const {
+    unsigned long _ = info.offset*sizeof(_Ty);
+
+    glVertexAttribPointer(info.index, info.size, info.type, info.normalized, info.stride, (void*)_);
+    GL_CHECK_ERRORS();
+    glEnableVertexAttribArray(info.index);
+    GL_CHECK_ERRORS();
 }
 
-void VertexArray::createPointers(std::vector<VertexArrayInfo> info) {
-    for (auto& i : info) {
-        glEnableVertexAttribArray(i.index);
-        glVertexAttribPointer(i.index, i.size, i.type, i.normalized, i.stride, reinterpret_cast<void*>(i.offset));
-    }
-}
+void VertexArray::linkAttribFast(const VertexArrayInfo& info) const {
+    unsigned long _ = info.offset * sizeof(float);
 
-void VertexArray::bind() const {
-    glBindVertexArray(m_id);
-}
-
-void VertexArray::unbind() const {
-    glBindVertexArray(0);
-}
-
-unsigned int VertexArray::id() const {
-    return m_id;
+    glVertexAttribPointer(info.index, info.size, info.type, info.normalized, info.stride, (void*)_);
+    GL_CHECK_ERRORS();
+    glEnableVertexAttribArray(info.index);
+    GL_CHECK_ERRORS();
 }

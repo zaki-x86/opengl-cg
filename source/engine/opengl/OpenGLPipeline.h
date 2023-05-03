@@ -31,7 +31,7 @@ struct BufferInfo
     BufferType type;
     unsigned int target;
     unsigned long size;
-    _Ty* data;
+    std::vector<_Ty> data;
     unsigned int usage;
 };
 
@@ -44,13 +44,16 @@ public:
 
     Buffer();
     Buffer(const BufferInfo<_Ty>& info);
-    //Buffer(const Buffer& other);
-    //Buffer(Buffer&& other);
+    Buffer(const Buffer& other) = default;
+    Buffer(Buffer&& other) = default;
     ~Buffer();
 
     Buffer& operator=(const BufferInfo<_Ty>& info);
-    //Buffer& operator=(const Buffer& other);
-    //Buffer& operator=(Buffer&& other);
+    Buffer& operator=(BufferInfo<_Ty>&& info);
+    Buffer& operator=(const Buffer& other) = default;
+    Buffer& operator=(Buffer&& other) = default;
+
+    void setBuffer(const BufferInfo<_Ty>& info);
 
     void bind() const;
     void unbind() const;
@@ -66,16 +69,16 @@ template<typename _Ty>
 Buffer<_Ty>::Buffer()
 {
     glGenBuffers(1, &m_id);
+    GL_CHECK_ERRORS();
 }
 
 template<typename _Ty>
 Buffer<_Ty>::Buffer(const BufferInfo<_Ty>& info)
-{
+{   
     m_target = info.target;
     glGenBuffers(1, &m_id);
     bind();
-    glBufferData(info.target, info.size, info.data, info.usage);
-    //unbind();
+    glBufferData(info.target, info.size, info.data.data(), info.usage);
     GL_CHECK_ERRORS();
 }
 
@@ -83,6 +86,7 @@ template<typename _Ty>
 Buffer<_Ty>::~Buffer()
 {
     glDeleteBuffers(1, &m_id);
+    GL_CHECK_ERRORS();
 }
 
 template<typename _Ty>
@@ -90,21 +94,44 @@ Buffer<_Ty>& Buffer<_Ty>::operator=(const BufferInfo<_Ty>& info)
 {
     m_target = info.target;
     bind();
-    glBufferData(info.target, info.size, info.data, info.usage);
+    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CHECK_ERRORS();
     //unbind();
     return *this;
+}
+
+template<typename _Ty>
+Buffer<_Ty>& Buffer<_Ty>::operator=(BufferInfo<_Ty>&& info)
+{
+    m_target = info.target;
+    bind();
+    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CHECK_ERRORS();
+    //unbind();
+    return *this;
+}
+
+template<typename _Ty>
+void Buffer<_Ty>::setBuffer(const BufferInfo<_Ty>& info) {
+    m_target = info.target;
+    bind();
+    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CHECK_ERRORS();
+    //unbind();
 }
 
 template<typename _Ty>
 void Buffer<_Ty>::bind() const 
 {
     glBindBuffer(m_target, m_id);
+    GL_CHECK_ERRORS();
 }
 
 template<typename _Ty>
 void Buffer<_Ty>::unbind() const
 {
     glBindBuffer(m_target, 0);
+    GL_CHECK_ERRORS();
 }
 
 template<typename _Ty>
@@ -115,33 +142,81 @@ unsigned int Buffer<_Ty>::id() const
 
 struct VertexArrayInfo
 {
-    unsigned int index;
-    unsigned int size;
-    unsigned int type;
-    bool normalized;
-    unsigned int stride;
+    GLuint index;
+    GLuint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
     unsigned long offset;
 };
 
-class VertexArray
-{
-public:
-    VertexArray();
-    //VertexArray(const VertexArray& other);
-    //VertexArray(VertexArray&& other);
-    ~VertexArray();
+class VertexArray {
 
-    //VertexArray& operator=(const VertexArray& other);
-    //VertexArray& operator=(VertexArray&& other);
+ public:
 
-    void createPointers(std::vector<VertexArrayInfo> info);
-    void bind() const;
-    void unbind() const;
+  VertexArray() = default;
 
-    unsigned int id() const;
+  VertexArray(const VertexArray& other) = default;
 
-private:
-    unsigned int m_id;
+  VertexArray(VertexArray&& other) { *this = std::move(other); }
+
+  ~VertexArray() { if (m_id) glDeleteVertexArrays(1, &m_id); }
+
+  VertexArray& operator=(const VertexArray& other) = default;
+
+  VertexArray& operator=(VertexArray&& other) {
+    if (this != &other) {
+      if (m_id) glDeleteVertexArrays(1, &m_id);
+
+      m_id = std::exchange(other.m_id, 0);
+    }
+    return *this;
+  }
+
+  /**
+   * @brief Binds the VertexArray.
+   */
+  void bind() const { glBindVertexArray(m_id); }
+
+  /**
+   * @brief Specifies how OpenGL should interpret the vertex buffer data whenever a draw call is made.
+   * @param vbo The vertex buffer object to be binded.
+   * @param layout Specifies the index of the generic vertex attribute to be modified. Must match the layout in the shader.
+   * @param components Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4.
+   * @param type Type of the data.
+   * @param stride Specifies the byte offset between consecutive generic vertex attributes.
+   * @param offset Specifies a offset of the first component of the first generic vertex attribute in the array in the data store.
+   * @param normalize Specifies whether fixed-point data values should be normalized.
+   */
+  template<typename _Ty>
+  void linkAttrib(const Buffer<_Ty>& vbo, const VertexArrayInfo&) const;
+
+  /**
+   * @brief Specifies how OpenGL should interpret the vertex buffer data whenever a draw call is made. IT DOESN'T BIND ANYTHING!
+   * @param layout Specifies the index of the generic vertex attribute to be modified. Must match the layout in the shader.
+   * @param components Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4.
+   * @param type Type of the data.
+   * @param stride Specifies the byte offset between consecutive generic vertex attributes.
+   * @param offset Specifies a offset of the first component of the first generic vertex attribute in the array in the data store.
+   * @param normalize Specifies whether fixed-point data values should be normalized.
+   */
+  void linkAttribFast(const VertexArrayInfo& info) const;
+
+  /**
+   * @brief Generates the vertex array buffer.
+   */
+  void create();
+
+  /**
+   * @brief Unbinds the VertexArray.
+   */
+  void unbind() const { glBindVertexArray(0); }
+
+  GLuint id() const { return m_id; }
+
+ private:
+
+  GLuint m_id {};
 };
 
 
