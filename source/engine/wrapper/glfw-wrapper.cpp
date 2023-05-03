@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 
-GLFWWrapper::GLFWWrapper(const GLFWConfig& config, int width, int height, const std::string& title) : m_initialized(false) {
+GLFWWrapper::GLFWWrapper(const GLFWConfig& config, int width, int height, const std::string& title) : m_initialized(false), m_title(title) {
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialize GLFW");
     }
@@ -70,7 +70,12 @@ GLFWwindow* GLFWWrapper::getWindow() const {
 
 
 void GLFWWrapper::setTitle(const std::string& title) {
+    m_title = title;
     glfwSetWindowTitle(m_window, title.c_str());
+}
+
+std::string GLFWWrapper::getTitle() const {
+    return m_title;
 }
 
 void GLFWWrapper::makeContextCurrent() {
