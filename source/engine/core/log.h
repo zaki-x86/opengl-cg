@@ -9,7 +9,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#define GL_LOG_FILE "gl.log"
+#define GL_LOG_FILE "/home/zaki/Tutorials/cg-opengl/logs/gl.log"
 
 bool restart_gl_log();
 

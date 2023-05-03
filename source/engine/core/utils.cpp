@@ -81,6 +81,12 @@ void _update_fps_counter(GLFWwindow* window) {
 void _glCheckErrors(const char *filename, int line)
 {
     GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR)
-        printf("OpenGL Error: %s (%d) [%u] %s\n", filename, line, err, glGetErrorString(err));
+    if ((err = glGetError()) != GL_NO_ERROR)
+        gl_log_err("OpenGL Error: %s (%d) [%u] %s\n", filename, line, err, glGetErrorString(err));
+}
+
+void _update_delta_time(float* deltaTime, float* lastFrame) {
+    float currentFrame = (float)glfwGetTime();
+    *deltaTime = currentFrame - *lastFrame;
+    *lastFrame = currentFrame;
 }

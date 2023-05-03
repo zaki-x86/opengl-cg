@@ -10,6 +10,7 @@
 #include "log.h"
 
 #define GL_CHECK_ERRORS() _glCheckErrors(__FILE__, __LINE__)
+#define GL_LOG(message, ...) gl_log(message, ##__VA_ARGS__)
 
 void glfw_error_callback(int error, const char* description);
 
@@ -30,5 +31,7 @@ void gradualColorCycle(RGB rgb, glm::vec3* color);
 void _update_fps_counter(GLFWwindow* window);
 
 void _glCheckErrors(const char *filename, int line);
+
+void _update_delta_time(float* deltaTime, float* lastFrame);
 
 #endif // !_UTILS_H_
