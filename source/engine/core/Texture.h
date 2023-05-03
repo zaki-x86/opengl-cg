@@ -10,7 +10,7 @@
 
 #include "utils.h"
 #include "Shader.h"
-#include "stb_image.h"
+#include "stb_image/stb_image.h"
 
     /// Sampling
     /// sampling is the process of determining the texture color for a texture coordinate
@@ -73,7 +73,7 @@
 class Texture {
 public:
     Texture();
-    Texture(const std::string& fileLoc);
+    Texture(const std::string& fileLoc, GLenum textureUnit = GL_TEXTURE0);
     ~Texture();
 
     void load(const std::string& fileLoc);
@@ -89,11 +89,12 @@ public:
     int bitDepth() const { return m_bitDepth; }
     void setBitDepth(int bitDepth) { m_bitDepth = bitDepth; }
 private:
-    GLuint m_textureID;
+    std::string m_fileLoc;
+    GLenum m_textureUnit; // texture unit is the slot that the texture is bound to
     int m_width, m_height, m_bitDepth;
+    GLuint m_textureID;
     unsigned char* m_textureBuffer;
 
-    std::string m_fileLoc;
 };
 
 #endif // !_TEXTURE_H_
