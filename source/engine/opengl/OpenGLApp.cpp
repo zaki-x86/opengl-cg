@@ -39,8 +39,6 @@ OpenGLApp::~OpenGLApp() {
 }
 
 bool OpenGLApp::initialized() {
-    
-    
     return m_initialized;
 }
 

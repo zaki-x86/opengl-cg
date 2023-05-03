@@ -13,16 +13,19 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
 file(GLOB_RECURSE SOURCES source/*.cpp)
+file(GLOB_RECURSE EXT_SOURCES ext/*cpp)
 
 add_executable(cg-opengl
         ${SOURCES}
+        ${EXT_SOURCES}
 )
+
 
 target_include_directories(cg-opengl PRIVATE
         ${OPENGL_INCLUDE_DIRS}
         ${GLEW_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
-        include
+        ext
 )
 
 target_link_libraries(cg-opengl
@@ -43,3 +46,6 @@ file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/bin)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(cg-opengl PRIVATE _DEBUG ggdb3 EXCEPTIONS_ENABLED)
 endif()
+
+message(STATUS "Building tutorial code")
+add_subdirectory(test)
