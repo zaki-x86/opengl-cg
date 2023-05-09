@@ -1,4 +1,4 @@
-GL_LOG_FILE log. local time Wed May  3 16:18:42 2023
+GL_LOG_FILE log. local time Tue May  9 04:38:33 2023
 
 Vertex data: 
 -0.500000 -0.500000 -0.500000 0.000000 0.000000 
@@ -92,4 +92,3 @@ Vertex data:
 -0.500000 0.500000 -0.500000 0.000000 1.000000 
 0.000000 
 Created VAO with ID: 2
-OpenGL Error: /home/zaki/Tutorials/cg-opengl/source/engine/core/Texture.cpp (88) [1282] Invalid Operation

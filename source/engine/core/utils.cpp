@@ -81,7 +81,7 @@ void _update_fps_counter(GLFWwindow* window) {
 void _glCheckErrors(const char *filename, int line)
 {
     GLenum err;
-    if ((err = glGetError()) != GL_NO_ERROR)
+    while ((err = glGetError()) != GL_NO_ERROR)
         gl_log_err("OpenGL Error: %s (%d) [%u] %s\n", filename, line, err, glGetErrorString(err));
 }
 

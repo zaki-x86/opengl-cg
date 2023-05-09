@@ -69,7 +69,7 @@ template<typename _Ty>
 Buffer<_Ty>::Buffer()
 {
     glGenBuffers(1, &m_id);
-    GL_CHECK_ERRORS();
+    
 }
 
 template<typename _Ty>
@@ -79,14 +79,14 @@ Buffer<_Ty>::Buffer(const BufferInfo<_Ty>& info)
     glGenBuffers(1, &m_id);
     bind();
     glBufferData(info.target, info.size, info.data.data(), info.usage);
-    GL_CHECK_ERRORS();
+    
 }
 
 template<typename _Ty>
 Buffer<_Ty>::~Buffer()
 {
     glDeleteBuffers(1, &m_id);
-    GL_CHECK_ERRORS();
+    
 }
 
 template<typename _Ty>
@@ -95,7 +95,7 @@ Buffer<_Ty>& Buffer<_Ty>::operator=(const BufferInfo<_Ty>& info)
     m_target = info.target;
     bind();
     glBufferData(info.target, info.size, info.data.data(), info.usage);
-    GL_CHECK_ERRORS();
+    
     //unbind();
     return *this;
 }
@@ -106,7 +106,7 @@ Buffer<_Ty>& Buffer<_Ty>::operator=(BufferInfo<_Ty>&& info)
     m_target = info.target;
     bind();
     glBufferData(info.target, info.size, info.data.data(), info.usage);
-    GL_CHECK_ERRORS();
+    
     //unbind();
     return *this;
 }
@@ -116,7 +116,7 @@ void Buffer<_Ty>::setBuffer(const BufferInfo<_Ty>& info) {
     m_target = info.target;
     bind();
     glBufferData(info.target, info.size, info.data.data(), info.usage);
-    GL_CHECK_ERRORS();
+    
     //unbind();
 }
 
@@ -124,14 +124,14 @@ template<typename _Ty>
 void Buffer<_Ty>::bind() const 
 {
     glBindBuffer(m_target, m_id);
-    GL_CHECK_ERRORS();
+    
 }
 
 template<typename _Ty>
 void Buffer<_Ty>::unbind() const
 {
     glBindBuffer(m_target, 0);
-    GL_CHECK_ERRORS();
+    
 }
 
 template<typename _Ty>
