@@ -12,7 +12,7 @@
 #include <initializer_list>
 #include <memory>
 
-#include "utils.h"
+#include "../opengl/utils.h"
 #include "Shader.h"
 #include "Vertex.h"
 

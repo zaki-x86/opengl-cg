@@ -43,7 +43,7 @@ bool OpenGLApp::initialized() {
 }
 
 void OpenGLApp::setClearColor(float r, float g, float b, float a) {
-    glClearColor(r, g, b, a);
+    GL_CALL(glClearColor(r, g, b, a));
 }
 
 void OpenGLApp::enableDepthTest(GLenum func) {
@@ -81,12 +81,14 @@ std::string OpenGLApp::getRenderer() const {
 }
 
 void OpenGLApp::setViewport(int x, int y, int width, int height) {
-    glViewport(x, y, width, height);
+    GL_CALL(glViewport(x, y, width, height));
 }
 
 void OpenGLApp::clear() {
-    if(m_enableDepthTest)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    else
-        glClear(GL_COLOR_BUFFER_BIT);
+    if(m_enableDepthTest) {
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    }
+    else {
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+    }
 }

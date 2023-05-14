@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include <vector>
-#include "../core/utils.h"
+#include "utils.h"
 
 enum BufferType
 {
@@ -68,7 +68,7 @@ private:
 template<typename _Ty>
 Buffer<_Ty>::Buffer()
 {
-    glGenBuffers(1, &m_id);
+   GL_CALL( glGenBuffers(1, &m_id));
     
 }
 
@@ -76,16 +76,16 @@ template<typename _Ty>
 Buffer<_Ty>::Buffer(const BufferInfo<_Ty>& info)
 {   
     m_target = info.target;
-    glGenBuffers(1, &m_id);
+    GL_CALL(glGenBuffers(1, &m_id));
     bind();
-    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CALL(glBufferData(info.target, info.size, info.data.data(), info.usage));
     
 }
 
 template<typename _Ty>
 Buffer<_Ty>::~Buffer()
 {
-    glDeleteBuffers(1, &m_id);
+    GL_CALL(glDeleteBuffers(1, &m_id));
     
 }
 
@@ -94,7 +94,7 @@ Buffer<_Ty>& Buffer<_Ty>::operator=(const BufferInfo<_Ty>& info)
 {
     m_target = info.target;
     bind();
-    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CALL(glBufferData(info.target, info.size, info.data.data(), info.usage));
     
     //unbind();
     return *this;
@@ -105,7 +105,7 @@ Buffer<_Ty>& Buffer<_Ty>::operator=(BufferInfo<_Ty>&& info)
 {
     m_target = info.target;
     bind();
-    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CALL(glBufferData(info.target, info.size, info.data.data(), info.usage));
     
     //unbind();
     return *this;
@@ -115,7 +115,7 @@ template<typename _Ty>
 void Buffer<_Ty>::setBuffer(const BufferInfo<_Ty>& info) {
     m_target = info.target;
     bind();
-    glBufferData(info.target, info.size, info.data.data(), info.usage);
+    GL_CALL(glBufferData(info.target, info.size, info.data.data(), info.usage));
     
     //unbind();
 }
@@ -123,14 +123,14 @@ void Buffer<_Ty>::setBuffer(const BufferInfo<_Ty>& info) {
 template<typename _Ty>
 void Buffer<_Ty>::bind() const 
 {
-    glBindBuffer(m_target, m_id);
+    GL_CALL(glBindBuffer(m_target, m_id));
     
 }
 
 template<typename _Ty>
 void Buffer<_Ty>::unbind() const
 {
-    glBindBuffer(m_target, 0);
+    GL_CALL(glBindBuffer(m_target, 0));
     
 }
 
@@ -152,71 +152,77 @@ struct VertexArrayInfo
 
 class VertexArray {
 
- public:
+public:
 
-  VertexArray() = default;
+    VertexArray();
 
-  VertexArray(const VertexArray& other) = default;
+    VertexArray(const VertexArray& other) = default;
 
-  VertexArray(VertexArray&& other) { *this = std::move(other); }
+    VertexArray(VertexArray&& other) { *this = std::move(other); }
 
-  ~VertexArray() { if (m_id) glDeleteVertexArrays(1, &m_id); }
-
-  VertexArray& operator=(const VertexArray& other) = default;
-
-  VertexArray& operator=(VertexArray&& other) {
-    if (this != &other) {
-      if (m_id) glDeleteVertexArrays(1, &m_id);
-
-      m_id = std::exchange(other.m_id, 0);
+    ~VertexArray() { 
+        if (m_id) {
+            GL_CALL(glDeleteVertexArrays(1, &m_id)); 
+        }
     }
-    return *this;
-  }
 
-  /**
-   * @brief Binds the VertexArray.
-   */
-  void bind() const { glBindVertexArray(m_id); }
+    VertexArray& operator=(const VertexArray& other) = default;
 
-  /**
-   * @brief Specifies how OpenGL should interpret the vertex buffer data whenever a draw call is made.
-   * @param vbo The vertex buffer object to be binded.
-   * @param layout Specifies the index of the generic vertex attribute to be modified. Must match the layout in the shader.
-   * @param components Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4.
-   * @param type Type of the data.
-   * @param stride Specifies the byte offset between consecutive generic vertex attributes.
-   * @param offset Specifies a offset of the first component of the first generic vertex attribute in the array in the data store.
-   * @param normalize Specifies whether fixed-point data values should be normalized.
-   */
-  template<typename _Ty>
-  void linkAttrib(const Buffer<_Ty>& vbo, const VertexArrayInfo&) const;
+    VertexArray& operator=(VertexArray&& other) {
+        if (this != &other) {
+            if (m_id) {
+            GL_CALL(glDeleteVertexArrays(1, &m_id));
+            }
 
-  /**
-   * @brief Specifies how OpenGL should interpret the vertex buffer data whenever a draw call is made. IT DOESN'T BIND ANYTHING!
-   * @param layout Specifies the index of the generic vertex attribute to be modified. Must match the layout in the shader.
-   * @param components Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4.
-   * @param type Type of the data.
-   * @param stride Specifies the byte offset between consecutive generic vertex attributes.
-   * @param offset Specifies a offset of the first component of the first generic vertex attribute in the array in the data store.
-   * @param normalize Specifies whether fixed-point data values should be normalized.
-   */
-  void linkAttribFast(const VertexArrayInfo& info) const;
+            m_id = std::exchange(other.m_id, 0);
+        }
+        return *this;
+    }
 
-  /**
-   * @brief Generates the vertex array buffer.
-   */
-  void create();
+    /**
+     * @brief Binds the VertexArray.
+     */
+    inline void bind() const { GL_CALL(glBindVertexArray(m_id)); }
 
-  /**
-   * @brief Unbinds the VertexArray.
-   */
-  void unbind() const { glBindVertexArray(0); }
+    /**
+     * @brief Specifies how OpenGL should interpret the vertex buffer data whenever a draw call is made.
+     * @param vbo The vertex buffer object to be binded.
+     * @param layout Specifies the index of the generic vertex attribute to be modified. Must match the layout in the shader.
+     * @param components Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4.
+     * @param type Type of the data.
+     * @param stride Specifies the byte offset between consecutive generic vertex attributes.
+     * @param offset Specifies a offset of the first component of the first generic vertex attribute in the array in the data store.
+     * @param normalize Specifies whether fixed-point data values should be normalized.
+     */
+    template<typename _Ty>
+    void linkAttrib(const Buffer<_Ty>& vbo, const VertexArrayInfo&) const;
 
-  GLuint id() const { return m_id; }
+    /**
+     * @brief Specifies how OpenGL should interpret the vertex buffer data whenever a draw call is made. IT DOESN'T BIND ANYTHING!
+     * @param layout Specifies the index of the generic vertex attribute to be modified. Must match the layout in the shader.
+     * @param components Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, 4.
+     * @param type Type of the data.
+     * @param stride Specifies the byte offset between consecutive generic vertex attributes.
+     * @param offset Specifies a offset of the first component of the first generic vertex attribute in the array in the data store.
+     * @param normalize Specifies whether fixed-point data values should be normalized.
+     */
+    void linkAttribFast(const VertexArrayInfo& info) const;
 
- private:
+    /**
+     * @brief Generates the vertex array buffer.
+     */
+    void create();
 
-  GLuint m_id {};
+    /**
+     * @brief Unbinds the VertexArray.
+     */
+    void unbind() const { GL_CALL(glBindVertexArray(0)); }
+
+    GLuint id() const { return m_id; }
+
+private:
+
+    GLuint m_id {0};
 };
 
 

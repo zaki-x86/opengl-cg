@@ -26,6 +26,7 @@ target_include_directories(cg-opengl PRIVATE
         ${GLEW_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
         ext
+        test
 )
 
 target_link_libraries(cg-opengl

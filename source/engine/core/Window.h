@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-#include "utils.h"
+#include "../opengl/utils.h"
 
 /**
  * @brief Generic window class

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "utils.h"
+#include "../opengl/utils.h"
 #include "Shader.h"
 #include "stb_image/stb_image.h"
 

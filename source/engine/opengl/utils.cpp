@@ -85,6 +85,11 @@ void _glCheckErrors(const char *filename, int line)
         gl_log_err("OpenGL Error: %s (%d) [%u] %s\n", filename, line, err, glGetErrorString(err));
 }
 
+void _glClearErrors()
+{
+    while (glGetError() != GL_NO_ERROR);
+}
+
 void _update_delta_time(float* deltaTime, float* lastFrame) {
     float currentFrame = (float)glfwGetTime();
     *deltaTime = currentFrame - *lastFrame;
