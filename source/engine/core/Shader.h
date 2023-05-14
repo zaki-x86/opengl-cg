@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include <GL/glew.h>
 #include <glm/vec3.hpp>
@@ -15,79 +16,25 @@
 namespace glm {}
 
 
-/**
- * decimals from 0 to 9 in hex:
- * 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 
- * 
- */
-#define SHADER_COMPILE_SUCCESS 0b00000000
-#define VERTEX_SHADER_COMPILE_SUCCESS 0b00000001
-#define FRAGMENT_SHADER_COMPILE_SUCCESS 0b00000010
-#define SHADER_LINK_SUCCESS 0b00000100
-
-#define SHADER_COMPILE_FAILED 0b10000000
-#define VERTEX_SHADER_COMPILE_FAILED 0b00000001
-#define FRAGMENT_SHADER_COMPILE_FAILED 0b00000010
-#define SHADER_LINK_FAILED 0b00000100
-#define VERTEX_SHADER_FILE_READ_FAILED 0b00001000
-#define FRAGMENT_SHADER_FILE_READ_FAILED 0b00010000
-#define VERTEX_SHADER_FILE_EMPTY 0b00100000
-#define FRAGMENT_SHADER_FILE_EMPTY 0b01000000
-
-#define SHADER_VALID_PROGRAM 0b00001000
-#define SHADER_INVALID_PROGRAM 0b01000000
-
-struct ShaderDebugInfo {
-    ShaderDebugInfo() : status(0), VertexShaderCompileInfo(""), FragmentShaderCompileInfo(""), LinkInfo("") {}
-    ShaderDebugInfo(const ShaderDebugInfo& other) : status(other.status), VertexShaderCompileInfo(other.VertexShaderCompileInfo), FragmentShaderCompileInfo(other.FragmentShaderCompileInfo), LinkInfo(other.LinkInfo) {}
-    ShaderDebugInfo(ShaderDebugInfo&& other) : status(other.status), VertexShaderCompileInfo(std::move(other.VertexShaderCompileInfo)), FragmentShaderCompileInfo(std::move(other.FragmentShaderCompileInfo)), LinkInfo(std::move(other.LinkInfo)) {}
-
-    ShaderDebugInfo& operator= (const ShaderDebugInfo& other) {
-        status = other.status;
-        VertexShaderCompileInfo = other.VertexShaderCompileInfo;
-        FragmentShaderCompileInfo = other.FragmentShaderCompileInfo;
-        LinkInfo = other.LinkInfo;
-        return *this;
-    }
-
-    ShaderDebugInfo& operator= (ShaderDebugInfo&& other) {
-        status = other.status;
-        VertexShaderCompileInfo = std::move(other.VertexShaderCompileInfo);
-        FragmentShaderCompileInfo = std::move(other.FragmentShaderCompileInfo);
-        LinkInfo = std::move(other.LinkInfo);
-        return *this;
-    }
-
-    uint8_t status;
-    std::string VertexShaderCompileInfo;
-    std::string FragmentShaderCompileInfo;
-    std::string LinkInfo;
-    std::string ValidateInfo;
-};
-
-
 class Shader {
 public:
-    Shader(bool debug = true);
+    Shader();
     
     Shader(
         const std::string& vertexShaderPath,
-        const std::string& fragmentShaderPath,
-        bool debug = true);
+        const std::string& fragmentShaderPath);
     
     ~Shader();
 
     void setShaders(
         const std::string& vertexShaderPath,
-        const std::string& fragmentShaderPath) {
-            _setShaders(vertexShaderPath, fragmentShaderPath);
-        }
+        const std::string& fragmentShaderPath) 
+    {
+        _setShaders(vertexShaderPath, fragmentShaderPath);
+    }
 
-    inline constexpr unsigned int getID() const { return m_programID;}
-    ShaderDebugInfo& getDebugInfo() const { return *m_debugInfo; }
+    inline constexpr unsigned int id() const { return m_programID;}
 
-    void compile();
-    void disableDebug() { m_debug = false;}
     void use() { glUseProgram(m_programID); }
 
     /// Set uniforms
@@ -125,88 +72,88 @@ private:
     GLuint m_programID;
     GLuint m_vertexShaderID;
     GLuint m_fragmentShaderID;
-    ShaderDebugInfo* m_debugInfo;
-    bool m_debug;
 
+private:
     enum {
         VERTEX_SHADER,
         FRAGMENT_SHADER
     };
 
-    std::string _readShaderFile(const std::string& filePath) {
-        std::ifstream shaderFile(filePath);
-        if (!shaderFile.is_open()) {
-            #ifdef EXCEPTIONS_ENABLED
-            throw std::runtime_error("Failed to open shader file: " + filePath);
-            #endif // EXCEPTIONS_ENABLED
+private:
+    void _setShaders(const std::string& vertexShaderPath, const std::string& fragmentShaderPath) {
+        // 1. retrieve the vertex/fragment source code from filePath
+        std::string vertexCode;
+        std::string fragmentCode;
+        std::ifstream vShaderFile;
+        std::ifstream fShaderFile;
+        // ensure ifstream objects can throw exceptions:
+        vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+        fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+        try 
+        {
+            // open files
+            vShaderFile.open(vertexShaderPath);
+            fShaderFile.open(fragmentShaderPath);
+            std::stringstream vShaderStream, fShaderStream;
+            // read file's buffer contents into streams
+            vShaderStream << vShaderFile.rdbuf();
+            fShaderStream << fShaderFile.rdbuf();		
+            // close file handlers
+            vShaderFile.close();
+            fShaderFile.close();
+            // convert stream into string
+            vertexCode = vShaderStream.str();
+            fragmentCode = fShaderStream.str();			
         }
-        
-        std::string res((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-        
-        if (res.empty()) {
-            #ifdef EXCEPTIONS_ENABLED
-            throw std::runtime_error("Shader file is empty: " + filePath);
-            #endif // EXCEPTIONS_ENABLED
+        catch (std::ifstream::failure& e)
+        {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
         }
+        const char* vShaderCode = vertexCode.c_str();
+        const char * fShaderCode = fragmentCode.c_str();
+        // 2. compile shaders
 
-        return res;
+        // vertex shader
+        m_vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(m_vertexShaderID, 1, &vShaderCode, NULL);
+        glCompileShader(m_vertexShaderID);
+        checkCompileErrors(m_vertexShaderID, "VERTEX");
+        // fragment Shader
+        m_fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(m_fragmentShaderID, 1, &fShaderCode, NULL);
+        glCompileShader(m_fragmentShaderID);
+        checkCompileErrors(m_fragmentShaderID, "FRAGMENT");
+        // shader Program
+        m_programID = glCreateProgram();
+        glAttachShader(m_programID, m_vertexShaderID);
+        glAttachShader(m_programID, m_fragmentShaderID);
+        glLinkProgram(m_programID);
+        checkCompileErrors(m_programID, "PROGRAM");
+        // delete the shaders as they're linked into our program now and no longer necessary
+        glDeleteShader(m_vertexShaderID);
+        glDeleteShader(m_fragmentShaderID);
     }
 
-    void _setShaders(const std::string& vertexShaderPath, const std::string& fragmentShaderPath) {
-        std::string m_vertexShaderCode = _readShaderFile(vertexShaderPath);
-        if (m_vertexShaderCode.empty()) {
-            if(m_debug) {
-                m_debugInfo->status = SHADER_COMPILE_FAILED || VERTEX_SHADER_FILE_EMPTY;
-                m_debugInfo->VertexShaderCompileInfo = std::string("Failed to read shader file: " + vertexShaderPath);
-            }
-
-            #ifdef EXCEPTIONS_ENABLED
-            throw std::runtime_error("Failed to read shader file: " + vertexShaderPath);
-            #endif // EXCEPTIONS_ENABLED
-        }
-
-        std::string m_fragmentShaderCode = _readShaderFile(fragmentShaderPath);
-        if (m_fragmentShaderCode.empty()) {
-            if(m_debug) {
-                m_debugInfo->status = SHADER_COMPILE_FAILED || FRAGMENT_SHADER_FILE_EMPTY;
-                m_debugInfo->FragmentShaderCompileInfo = "Failed to read shader file: " + fragmentShaderPath;
-            }
-
-            #ifdef EXCEPTIONS_ENABLED
-            throw std::runtime_error("Failed to read shader file: " + fragmentShaderPath);
-            #endif // EXCEPTIONS_ENABLED
-        }
-
-        // Compile shaders
-        m_vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-        const char* vertexShaderCode = m_vertexShaderCode.c_str();
-        glShaderSource(m_vertexShaderID, 1, &vertexShaderCode, NULL);
-        glCompileShader(m_vertexShaderID);
-
-        if(m_debug) {
-            int success;
-            glGetShaderiv(m_vertexShaderID, GL_COMPILE_STATUS, &success);
-            if(!success) {
-                m_debugInfo->status = SHADER_COMPILE_FAILED || VERTEX_SHADER_COMPILE_FAILED;
-                char infoLog[512];
-                glGetShaderInfoLog(m_vertexShaderID, 512, NULL, infoLog);
-                m_debugInfo->VertexShaderCompileInfo = std::string(infoLog);
+    void checkCompileErrors(GLuint shader, std::string type)
+    {
+        GLint success;
+        GLchar infoLog[1024];
+        if (type != "PROGRAM")
+        {
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+            if (!success)
+            {
+                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+                std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
             }
         }
-
-        m_fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-        const char* fragmentShaderCode = m_fragmentShaderCode.c_str();
-        glShaderSource(m_fragmentShaderID, 1, &fragmentShaderCode, NULL);
-        glCompileShader(m_fragmentShaderID);
-
-        if(m_debug) {
-            int success;
-            glGetShaderiv(m_fragmentShaderID, GL_COMPILE_STATUS, &success);
-            if(!success) {
-                m_debugInfo->status = SHADER_COMPILE_FAILED || FRAGMENT_SHADER_COMPILE_FAILED;
-                char infoLog[512];
-                glGetShaderInfoLog(m_fragmentShaderID, 512, NULL, infoLog);
-                m_debugInfo->FragmentShaderCompileInfo = std::string(infoLog);
+        else
+        {
+            glGetProgramiv(shader, GL_LINK_STATUS, &success);
+            if (!success)
+            {
+                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+                std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
             }
         }
     }

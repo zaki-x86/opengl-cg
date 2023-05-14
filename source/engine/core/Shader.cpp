@@ -1,63 +1,21 @@
 #include "Shader.h"
 #include <glm/gtc/type_ptr.hpp>
 
-Shader::Shader(bool debug) 
-: m_programID(0), m_vertexShaderID(0), m_fragmentShaderID(0), m_debugInfo(nullptr), m_debug(debug) {
-    if (m_debug) {
-        m_debugInfo = new ShaderDebugInfo();
-    }
-}
+Shader::Shader() 
+: m_programID(0), m_vertexShaderID(0), m_fragmentShaderID(0)
+{}
 
-Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath, bool debug)
-    : m_programID(0), m_vertexShaderID(0), m_fragmentShaderID(0), m_debug(debug) {
-    
-    if (m_debug) {
-        m_debugInfo = new ShaderDebugInfo();
-    }
+Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
+    : m_programID(0), m_vertexShaderID(0), m_fragmentShaderID(0)
+{
     
     _setShaders(vertexShaderPath, fragmentShaderPath);
-
 }
 
 Shader::~Shader() {
     glDeleteProgram(m_programID);
-    glDeleteShader(m_vertexShaderID);
-    glDeleteShader(m_fragmentShaderID);
 }
 
-void Shader::compile() {
-    m_programID = glCreateProgram();
-    glAttachShader(m_programID, m_vertexShaderID);
-    glAttachShader(m_programID, m_fragmentShaderID);
-    glLinkProgram(m_programID);
-
-    if(m_debug) {
-        int success;
-        glGetShaderiv(m_programID, GL_LINK_STATUS, &success);
-        if(!success) {
-            m_debugInfo->status = SHADER_COMPILE_FAILED || SHADER_LINK_FAILED;
-            char infoLog[512];
-            glGetShaderInfoLog(m_programID, 512, NULL, infoLog);
-            m_debugInfo->LinkInfo = std::string(infoLog);
-        }
-        else {
-            m_debugInfo->status = SHADER_COMPILE_SUCCESS || SHADER_LINK_SUCCESS;
-            m_debugInfo->LinkInfo = std::string("Shader program compiled and linked successfully");
-        }
-
-        glValidateProgram(m_programID);
-        if(!success) {
-            m_debugInfo->status = SHADER_INVALID_PROGRAM;
-            char infoLog[512];
-            glGetShaderInfoLog(m_programID, 512, NULL, infoLog);
-            m_debugInfo->ValidateInfo = std::string(infoLog);
-        }
-        else {
-            m_debugInfo->status = SHADER_VALID_PROGRAM;
-            m_debugInfo->ValidateInfo = std::string("Shader program passed validation");
-        }
-    } 
-}
 
 // Set uniforms implementations
 
