@@ -11,6 +11,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(assimp REQUIRED)
 
 file(GLOB_RECURSE SOURCES source/*.cpp)
 file(GLOB_RECURSE EXT_SOURCES ext/*cpp)
@@ -33,6 +34,7 @@ target_link_libraries(cg-opengl
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         glfw
+        assimp
 )
 
 # Store the executable in bin/ folder

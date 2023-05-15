@@ -1,32 +1,38 @@
 #include <iostream>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
-
+// Engine Window Wrapper
 #include "engine/wrapper/glfw-wrapper.h"
+
+// OpenGL
 #include "engine/opengl/OpenGLApp.h"
 #include "engine/opengl/OpenGLPipeline.h"
-#include "engine/core/utils.h"
+
+// Engine Gui
+#include "engine/Gui/gui.h"
+
+// Engine Core
+#include "engine/opengl/utils.h"
 #include "engine/core/Window.h"
 #include "engine/core/Shader.h"
 #include "engine/core/Texture.h"
 #include "engine/core/Vertex.h"
 #include "engine/core/Mesh.h"
+#include "engine/core/Cube.hpp"
+#include "engine/core/Camera.hpp"
 
+// tests
+#include "apps/TestClearColor.h"
+#include "apps/TestTexture2D.h"
+
+// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "engine/core/Cube.hpp"
-#include "engine/core/Camera.hpp"
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 990;
 
 using Vertf = Vertex<float>;
 using Posf  = Pos<float>;
@@ -41,8 +47,8 @@ int main()
     assert(restart_gl_log());
 
     GLFWConfig glfw_config{};
-    glfw_config.majorVersion = 3;
-    glfw_config.minorVersion = 3;
+    glfw_config.majorVersion = 4;
+    glfw_config.minorVersion = 6;
     glfw_config.profile = GLFW_OPENGL_CORE_PROFILE;
     glfw_config.resizable = false;
     glfw_config.forwardCompat = false;
@@ -59,56 +65,65 @@ int main()
 
     glfwSwapInterval(1); // Enable vsync
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window.getWindow(), true);
-    ImGui_ImplOpenGL3_Init("#version 330 core");
-
     OpenGLApp app;
     if (!app.initialized()) {
         std::cerr << "Failed to initialize OpenGLApp" << std::endl;
         return -1;
     }
 
+    bool show_gui = true;
+    EngineGui gui(window.getWindow());
+
+    test::TestApp* currentTest = nullptr;
+    test::TestMenu* testMenu = new test::TestMenu(currentTest);
+    currentTest = testMenu;
+
+    testMenu->registerTest<test::TestClearColor>("Clear Color");
+    testMenu->registerTest<test::TestTexture2D>("Container Cube");
+    
 
     // render loop
     // -----------
     while (!window.shouldClose())
     {
-        window.pollEvents();
-
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
         _update_fps_counter(window.getWindow());
         _update_delta_time(&deltaTime, &lastFrame);
 
+        window.pollEvents();
+        app.setClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        app.clear();
+        
+        // ---- Begin Gui Render
+        gui.render();
+
         // render
         // ------
-        app.clear();
 
-        ImGui::Render();
+        // -- Begin Main UI
+        // ----------------
+        if(gui.beginMainUI(&show_gui)) {
 
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            if (currentTest) {
+                currentTest->onUpdate(deltaTime);
+                currentTest->onRender();
+                
+                if(currentTest != testMenu && ImGui::Button("Back <")) {
+                    delete currentTest;
+                    currentTest = testMenu;
+                }
 
+                currentTest->onGuiRender();
+            }
+
+            gui.endMainUI();
+        }
+
+
+        // ---- End Gui Render
+        gui.renderEnd();
+        
         window.swapBuffers();
     }
-
-    // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 
     return 0;
 }
