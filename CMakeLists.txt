@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(cg-opengl)
+project(glrenderer)
 
 set(CMAKE_CXX_STANDARD 17)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -13,16 +12,16 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(assimp REQUIRED)
 
-file(GLOB_RECURSE SOURCES source/*.cpp)
+file(GLOB_RECURSE SOURCES Renderer/*.cpp)
 file(GLOB_RECURSE EXT_SOURCES ext/*cpp)
 
-add_executable(cg-opengl
+add_executable(glrenderer
         ${SOURCES}
         ${EXT_SOURCES}
 )
 
 
-target_include_directories(cg-opengl PRIVATE
+target_include_directories(glrenderer PRIVATE
         ${OPENGL_INCLUDE_DIRS}
         ${GLEW_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
@@ -30,7 +29,7 @@ target_include_directories(cg-opengl PRIVATE
         test
 )
 
-target_link_libraries(cg-opengl
+target_link_libraries(glrenderer
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         glfw
@@ -38,7 +37,7 @@ target_link_libraries(cg-opengl
 )
 
 # Store the executable in bin/ folder
-set_target_properties(cg-opengl PROPERTIES
+set_target_properties(glrenderer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
@@ -47,8 +46,17 @@ file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 # If debug, send -DDEBUG to the compiler
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(cg-opengl PRIVATE _DEBUG ggdb3 EXCEPTIONS_ENABLED)
+    target_compile_definitions(glrenderer 
+    PRIVATE 
+    _DEBUG ggdb3 EXCEPTIONS_ENABLED
+    )
 endif()
 
-message(STATUS "Building tutorial code")
-add_subdirectory(test)
+# Add aggressive compiler flags for target `glrenderer`
+target_compile_options(glrenderer
+    PRIVATE
+    -Wall -Wextra -Wpedantic -Werror
+)
+
+message(STATUS "Building tutorials")
+add_subdirectory(Tutorial)

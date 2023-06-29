@@ -14,3 +14,19 @@ test::TestPhongLightModel::TestPhongLightModel()
 {
     
 }
+
+test::TestPhongLightModel::~TestPhongLightModel()
+{
+    
+}
+
+void test::TestPhongLightModel::onUpdate(float deltaTime)
+{
+   (void)deltaTime;
+}
+
+void test::TestPhongLightModel::onRender() {}
+
+void test::TestPhongLightModel::onGuiRender() {}
+
+
