@@ -1,5 +1,11 @@
 # Hello Triangle
 
+## How to render an object in OpenGL?
+
+As we discussed in [Rendering Pipeline](rendering-pipeline.md), the vertex shader processes each vertex and transforms them from 3D coordinates to 2D coordinates. The vertex shader also allows us to do some basic processing on the vertex attributes. The fragment shader processes each fragment (or pixel) and outputs a color that is used to draw the pixel on the screen.
+
+
+
 ## Define the vertex data of the triangle
 
 For now let's draw a flat triangle onto the final screen area; x between -1 and 1, y between -1 and 1, and z = 0.
@@ -195,3 +201,7 @@ while(!glfwWindowShouldClose(window))
     glfwSwapBuffers(window);
 }
 ```
+
+---
+
+Next: [Shaders](shaders.md)

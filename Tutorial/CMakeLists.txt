@@ -16,6 +16,7 @@ find_package(glfw3 REQUIRED)
 find_package(assimp REQUIRED)
 
 file(GLOB_RECURSE SOURCES sources/*.cpp)
+file(GLOB_RECURSE INC_SOURCES include/*.cpp)
 file(GLOB_RECURSE EXT_SOURCES ../ext/*cpp)
 
 # Create an executable from each source
@@ -26,13 +27,14 @@ foreach(source ${SOURCES})
     string(REGEX REPLACE ".cpp$" "" TUTORIAL_EXE ${name})
 
     # create executable
-    add_executable(${TUTORIAL_EXE} ${source} ${EXT_SOURCES})
+    add_executable(${TUTORIAL_EXE} ${source} ${EXT_SOURCES} ${INC_SOURCES})
 
     target_include_directories(${TUTORIAL_EXE} PRIVATE
         ${OPENGL_INCLUDE_DIRS}
         ${GLEW_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
         ../ext
+        include/
     )
 
     target_link_libraries(${TUTORIAL_EXE}

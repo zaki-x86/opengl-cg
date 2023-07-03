@@ -211,4 +211,4 @@ return 0;
 
 ---
 
-Next: [Rendering a triangle](triangle.md)
+Next: [Rendering a triangle](hello-triangle.md)
